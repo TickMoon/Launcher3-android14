@@ -151,7 +151,7 @@ public final class OverviewTask {
             boolean taskWasFocused = mLauncher.isTablet() && getVisibleHeight() == mLauncher
                     .getFocusedTaskHeightForTablet();
             List<Integer> originalTasksCenterX =
-                    getCurrentTasksCenterXList().stream().sorted().toList();
+                    getCurrentTasksCenterXList().stream().sorted().collect(Collectors.toList());
             boolean isClearAllVisibleBeforeDismiss = mOverview.isClearAllVisible();
 
             dismissBySwipingUp();
@@ -163,7 +163,7 @@ public final class OverviewTask {
                 }
                 if (!isClearAllVisibleBeforeDismiss) {
                     List<Integer> currentTasksCenterX =
-                            getCurrentTasksCenterXList().stream().sorted().toList();
+                            getCurrentTasksCenterXList().stream().sorted().collect(Collectors.toList());
                     if (originalTasksCenterX.size() == currentTasksCenterX.size()) {
                         // Check for the same number of visible tasks before and after to
                         // avoid asserting on cases of shifting all tasks to close the distance

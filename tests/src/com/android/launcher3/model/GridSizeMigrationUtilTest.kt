@@ -275,7 +275,7 @@ class GridSizeMigrationUtilTest {
         verifyHotseat(
             c,
             idp,
-            mutableListOf(testPackage2, testPackage1, testPackage3, testPackage4).toList()
+            mutableListOf(testPackage2, testPackage1, testPackage3, testPackage4).collect(Collectors.toList())
         )
 
         // Check workspace items in grid B
@@ -332,7 +332,7 @@ class GridSizeMigrationUtilTest {
         verifyHotseat(
             c,
             idp,
-            mutableListOf(testPackage1, testPackage2, null, testPackage3, testPackage4).toList()
+            mutableListOf(testPackage1, testPackage2, null, testPackage3, testPackage4).collect(Collectors.toList())
         )
 
         // Check workspace items in grid A
@@ -394,7 +394,7 @@ class GridSizeMigrationUtilTest {
         verifyHotseat(
             c,
             idp,
-            mutableListOf(testPackage2, testPackage1, testPackage3, testPackage4).toList()
+            mutableListOf(testPackage2, testPackage1, testPackage3, testPackage4).collect(Collectors.toList())
         )
 
         // Check workspace items in grid B

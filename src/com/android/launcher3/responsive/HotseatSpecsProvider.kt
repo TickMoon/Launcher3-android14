@@ -86,6 +86,7 @@ data class HotseatSpec(
         check(isValid()) { "Invalid HotseatSpec found." }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     constructor(
         responsiveSpecType: ResponsiveSpecType,
         attrs: TypedArray,

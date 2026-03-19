@@ -38,6 +38,7 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -87,7 +88,6 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pm.InstallSessionHelper;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.uioverrides.PredictedAppIconInflater;
-import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.IntArray;
@@ -135,7 +135,7 @@ public class LauncherPreviewRenderer extends ContextWrapper
         public PreviewContext(Context base, InvariantDeviceProfile idp) {
             super(base, UserCache.INSTANCE, InstallSessionHelper.INSTANCE, LauncherPrefs.INSTANCE,
                     LauncherAppState.INSTANCE, InvariantDeviceProfile.INSTANCE,
-                    CustomWidgetManager.INSTANCE, PluginManagerWrapper.INSTANCE,
+                    CustomWidgetManager.INSTANCE,
                     WindowManagerProxy.INSTANCE, DisplayController.INSTANCE);
             mIdp = idp;
             mObjectMap.put(InvariantDeviceProfile.INSTANCE, idp);
@@ -427,7 +427,9 @@ public class LauncherPreviewRenderer extends ContextWrapper
                 mContext, info.appWidgetId, providerInfo);
 
         if (mWallpaperColorResources != null) {
-            view.setColorResources(mWallpaperColorResources);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                view.setColorResources(mWallpaperColorResources);
+            }
         }
 
         view.setTag(info);

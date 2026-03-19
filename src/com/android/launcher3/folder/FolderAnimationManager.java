@@ -35,7 +35,9 @@ import android.graphics.drawable.GradientDrawable;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 
+import com.android.app.animation.Interpolators;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.CellLayout;
 import com.android.launcher3.DeviceProfile;
@@ -104,12 +106,10 @@ public class FolderAnimationManager {
         mDuration = res.getInteger(R.integer.config_materialFolderExpandDuration);
         mDelay = res.getInteger(R.integer.config_folderDelay);
 
-        mFolderInterpolator = AnimationUtils.loadInterpolator(mContext,
-                R.interpolator.standard_interpolator);
+        mFolderInterpolator = Interpolators.ACCELERATE;
         mLargeFolderPreviewItemOpenInterpolator = AnimationUtils.loadInterpolator(mContext,
                 R.interpolator.large_folder_preview_item_open_interpolator);
-        mLargeFolderPreviewItemCloseInterpolator = AnimationUtils.loadInterpolator(mContext,
-                R.interpolator.standard_accelerate_interpolator);
+        mLargeFolderPreviewItemCloseInterpolator = Interpolators.ACCELERATE;
     }
 
     /**

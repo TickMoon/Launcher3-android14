@@ -333,11 +333,11 @@ public class AllAppsList {
                     if (Utilities.enableSupportForArchiving()) {
                         // In case an app is archived, the respective item flag corresponding to
                         // archiving should also be applied during package updates
-                        if (info.getActivityInfo().isArchived) {
-                            applicationInfo.runtimeStatusFlags |= FLAG_ARCHIVED;
-                        } else {
+//                        if (info.getActivityInfo().isArchived) {
+//                            applicationInfo.runtimeStatusFlags |= FLAG_ARCHIVED;
+//                        } else {
                             applicationInfo.runtimeStatusFlags &= (~FLAG_ARCHIVED);
-                        }
+//                        }
                     }
                     mDataChanged = true;
                 }

@@ -19,6 +19,7 @@ package com.android.launcher3.widget;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -111,7 +112,9 @@ public class LauncherAppWidgetHostView extends BaseLauncherAppWidgetHostView
     @Override
     public void setColorResources(@Nullable SparseIntArray colors) {
         if (colors == null) {
-            resetColorResources();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                resetColorResources();
+            }
         } else {
             super.setColorResources(colors);
         }

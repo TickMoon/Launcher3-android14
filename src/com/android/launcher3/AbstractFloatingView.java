@@ -50,8 +50,7 @@ import java.lang.annotation.RetentionPolicy;
  * Base class for a View which shows a floating UI on top of the launcher UI.
  */
 @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-public abstract class AbstractFloatingView extends LinearLayout implements TouchController,
-        OnBackAnimationCallback {
+public abstract class AbstractFloatingView extends LinearLayout implements TouchController{
 
     @IntDef(flag = true, value = {
             TYPE_FOLDER,
@@ -191,7 +190,6 @@ public abstract class AbstractFloatingView extends LinearLayout implements Touch
         return true;
     }
 
-    @Override
     public void onBackInvoked() {
         close(true);
     }

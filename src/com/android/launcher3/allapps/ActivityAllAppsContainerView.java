@@ -661,10 +661,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     /**
-     * If {@link ENABLE_ALL_APPS_RV_PREINFLATION} is enabled, wire custom
+     * If ENABLE_ALL_APPS_RV_PREINFLATION is enabled, wire custom
      * {@link RecyclerView.RecycledViewPool} to main and work {@link AllAppsRecyclerView}.
      *
-     * Then if {@link ALL_APPS_GONE_VISIBILITY} is enabled, update max pool size. This is because
+     * Then if ALL_APPS_GONE_VISIBILITY is enabled, update max pool size. This is because
      * all apps rv's hidden visibility is changed to {@link View#GONE} from {@link View#INVISIBLE),
      * thus we cannot rely on layout pass to update pool size.
      */

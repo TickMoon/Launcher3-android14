@@ -80,7 +80,7 @@
     <color name="text_color_secondary_dark">#FFFFFFFF</color>
     <color name="text_color_tertiary_dark">#CCFFFFFF</color>
 
-    <color name="wallpaper_popup_scrim">?android:attr/colorAccent</color>
+    <color name="wallpaper_popup_scrim">#FF1F1F1F</color>
 
     <color name="workspace_accent_color_light">#D3E3FD</color>
     <color name="workspace_accent_color_dark">#041E49</color>

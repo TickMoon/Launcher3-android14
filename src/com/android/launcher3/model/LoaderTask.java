@@ -107,6 +107,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 /**
  * Runnable for the thread that loads the contents of the launcher:
@@ -425,7 +426,7 @@ public class LoaderTask implements Runnable {
             }
             installingPkgs.forEach(mApp.getIconCache()::updateSessionCache);
             FileLog.d(TAG, "loadWorkspace: Packages with active install sessions: "
-                    + installingPkgs.keySet().stream().map(info -> info.mPackageName).toList());
+                    + installingPkgs.keySet().stream().map(info -> info.mPackageName).collect(Collectors.toList()));
 
             mFirstScreenBroadcast = new FirstScreenBroadcast(installingPkgs);
 
@@ -544,7 +545,7 @@ public class LoaderTask implements Runnable {
     private void processFolderItems() {
         // Sort the folder items, update ranks, and make sure all preview items are high res.
         List<FolderGridOrganizer> verifiers = mApp.getInvariantDeviceProfile().supportedProfiles
-                .stream().map(FolderGridOrganizer::new).toList();
+                .stream().map(FolderGridOrganizer::new).collect(Collectors.toList());
         for (FolderInfo folder : mBgDataModel.folders) {
             Collections.sort(folder.contents, Folder.ITEM_POS_COMPARATOR);
             verifiers.forEach(verifier -> verifier.setFolderInfo(folder));
@@ -667,7 +668,7 @@ public class LoaderTask implements Runnable {
             for (int i = 0; i < apps.size(); i++) {
                 LauncherActivityInfo app = apps.get(i);
                 AppInfo appInfo = new AppInfo(app, mUserCache.getUserInfo(user), quietMode);
-                if (Utilities.enableSupportForArchiving() && app.getApplicationInfo().isArchived) {
+                if (Utilities.enableSupportForArchiving()) {
                     // For archived apps, include progress info in case there is a pending
                     // install session post restart of device.
                     String appPackageName = app.getApplicationInfo().packageName;

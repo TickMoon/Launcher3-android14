@@ -1,5 +1,8 @@
 include ':IconLoader'
 project(':IconLoader').projectDir = new File(rootDir, 'iconloaderlib')
 
-include ':SharedLibWrapper'
-project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')
+include ':animation'
+project(':animation').projectDir = new File(rootDir, 'animationlib')
+
+/*include ':SharedLibWrapper'
+project(':SharedLibWrapper').projectDir = new File(rootDir, 'SharedLibWrapper')*/

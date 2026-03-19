@@ -361,7 +361,7 @@ public class BubbleBarController extends IBubblesListener.Stub {
         if (update.bubbleKeysInOrder != null && !update.bubbleKeysInOrder.isEmpty()) {
             // Create the new list
             List<BubbleBarBubble> newOrder = update.bubbleKeysInOrder.stream()
-                    .map(mBubbles::get).filter(Objects::nonNull).toList();
+                    .map(mBubbles::get).filter(Objects::nonNull).collect(Collectors.toList());
             if (!newOrder.isEmpty()) {
                 mBubbleBarViewController.reorderBubbles(newOrder);
             }

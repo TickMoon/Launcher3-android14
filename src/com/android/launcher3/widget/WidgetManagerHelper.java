@@ -133,23 +133,6 @@ public class WidgetManagerHelper {
                 appWidgetId).getBoolean(WIDGET_OPTION_RESTORE_COMPLETED);
     }
 
-
-    /**
-     * Load RemoteViews preview for this provider if available.
-     *
-     * @param info The provider info for the widget you want to preview.
-     * @param widgetCategory The widget category for which you want to display previews.
-     *
-     * @return Returns the widget preview that matches selected category, if available.
-     */
-    @Nullable
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
-    public RemoteViews loadGeneratedPreview(@NonNull AppWidgetProviderInfo info,
-            int widgetCategory) {
-        if (!android.appwidget.flags.Flags.generatedPreviews()) return null;
-        return mAppWidgetManager.getWidgetPreview(info.provider, info.getProfile(), widgetCategory);
-    }
-
     private static Stream<AppWidgetProviderInfo> allWidgetsSteam(Context context) {
         AppWidgetManager awm = context.getSystemService(AppWidgetManager.class);
         return Stream.concat(

@@ -65,7 +65,6 @@ import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.ContentWriter;
 import com.android.launcher3.util.SettingsCache;
 import com.android.launcher3.util.UserIconInfo;
-import com.android.systemui.shared.system.SysUiStatsLog;
 
 import java.util.Optional;
 
@@ -533,18 +532,6 @@ public class ItemInfo {
     }
 
     private int getUserType(UserIconInfo info) {
-        if (info == null) {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_UNKNOWN;
-        } else if (info.isMain()) {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_MAIN;
-        } else if (info.isPrivate()) {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_PRIVATE;
-        } else if (info.isWork()) {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_WORK;
-        } else if (info.isCloned()) {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_CLONED;
-        } else {
-            return SysUiStatsLog.LAUNCHER_UICHANGED__USER_TYPE__TYPE_UNKNOWN;
-        }
+        return 0;
     }
 }

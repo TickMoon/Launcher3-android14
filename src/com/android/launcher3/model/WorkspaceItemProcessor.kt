@@ -331,10 +331,7 @@ class WorkspaceItemProcessor(
                 )
             }
             if (
-                (c.restoreFlag != 0 ||
-                    Utilities.enableSupportForArchiving() &&
-                        activityInfo != null &&
-                        activityInfo.applicationInfo.isArchived) && !TextUtils.isEmpty(targetPkg)
+                (c.restoreFlag != 0) && !TextUtils.isEmpty(targetPkg)
             ) {
                 tempPackageKey.update(targetPkg, c.user)
                 val si = installingPkgs[tempPackageKey]
@@ -342,11 +339,7 @@ class WorkspaceItemProcessor(
                     info.runtimeStatusFlags =
                         info.runtimeStatusFlags and
                             ItemInfoWithIcon.FLAG_INSTALL_SESSION_ACTIVE.inv()
-                } else if (
-                    activityInfo == null ||
-                        (Utilities.enableSupportForArchiving() &&
-                            activityInfo.applicationInfo.isArchived)
-                ) {
+                } else if (activityInfo == null) {
                     // For archived apps, include progress info in case there is
                     // a pending install session post restart of device.
                     val installProgress = (si.getProgress() * 100).toInt()

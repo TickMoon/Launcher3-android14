@@ -178,7 +178,7 @@ public class RemoteTargetGluer {
                     mSplitBounds.rightBottomTaskId);
             List<RemoteAnimationTarget> overlayTargets = Arrays.stream(targets.apps).filter(
                     target -> target.windowConfiguration.getWindowingMode()
-                            != WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW).toList();
+                            != WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW).collect(Collectors.toList());
 
             // remoteTargetHandle[0] denotes topLeft task, so we pass in the bottomRight to exclude,
             // vice versa

@@ -17,6 +17,7 @@
 package com.android.launcher3;
 
 import static com.android.app.animation.Interpolators.LINEAR;
+import static com.android.launcher3.Flags.enableLeftRightSplitInPortrait;
 import static com.android.launcher3.Flags.enableOverviewIconMenu;
 import static com.android.launcher3.InvariantDeviceProfile.INDEX_DEFAULT;
 import static com.android.launcher3.InvariantDeviceProfile.INDEX_LANDSCAPE;
@@ -717,8 +718,7 @@ public class DeviceProfile {
         // actually portrait
         int leftRightSplitPortraitResId = Resources.getSystem().getIdentifier(
                 "config_leftRightSplitInPortrait", "bool", "android");
-        boolean allowLeftRightSplitInPortrait =
-                com.android.wm.shell.Flags.enableLeftRightSplitInPortrait()
+        boolean allowLeftRightSplitInPortrait = enableLeftRightSplitInPortrait()
                     && leftRightSplitPortraitResId > 0
                     && res.getBoolean(leftRightSplitPortraitResId);
         if (allowLeftRightSplitInPortrait && isTablet) {

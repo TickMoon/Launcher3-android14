@@ -1230,7 +1230,7 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
         boolean findExactPairMatch = itemInfos.size() == 2;
         // Convert the list of ItemInfo instances to a list of ComponentKeys
         List<ComponentKey> componentKeys =
-                itemInfos.stream().map(ItemInfo::getComponentKey).toList();
+                itemInfos.stream().map(ItemInfo::getComponentKey).collect(Collectors.toList());
         recents.getSplitSelectController().findLastActiveTasksAndRunCallback(
                 componentKeys,
                 findExactPairMatch,

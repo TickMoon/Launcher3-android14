@@ -65,6 +65,7 @@ import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.LauncherState.NO_OFFSET;
 import static com.android.launcher3.LauncherState.NO_SCALE;
 import static com.android.launcher3.LauncherState.SPRING_LOADED;
+import static com.android.launcher3.Utilities.ATLEAST_U;
 import static com.android.launcher3.Utilities.postAsyncCallback;
 import static com.android.launcher3.config.FeatureFlags.ENABLE_SMARTSPACE_REMOVAL;
 import static com.android.launcher3.config.FeatureFlags.FOLDABLE_SINGLE_PAGE;
@@ -104,6 +105,7 @@ import static com.android.launcher3.util.SettingsCache.TOUCHPAD_NATURAL_SCROLLIN
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -161,7 +163,6 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.annotation.UiThread;
 import androidx.annotation.VisibleForTesting;
-import androidx.window.embedding.RuleController;
 
 import com.android.launcher3.DropTarget.DragObject;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
@@ -220,10 +221,8 @@ import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.touch.AllAppsSwipeController;
 import com.android.launcher3.touch.ItemLongClickListener;
-import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
 import com.android.launcher3.util.ActivityResultInfo;
 import com.android.launcher3.util.ActivityTracker;
-import com.android.launcher3.util.BackPressHandler;
 import com.android.launcher3.util.CannedAnimationCoordinator;
 import com.android.launcher3.util.ComponentKey;
 import com.android.launcher3.util.IntArray;
@@ -259,11 +258,8 @@ import com.android.launcher3.widget.WidgetManagerHelper;
 import com.android.launcher3.widget.custom.CustomWidgetManager;
 import com.android.launcher3.widget.model.WidgetsListBaseEntry;
 import com.android.launcher3.widget.picker.WidgetsFullSheet;
-import com.android.systemui.plugins.LauncherOverlayPlugin;
-import com.android.systemui.plugins.PluginListener;
 import com.android.systemui.plugins.shared.LauncherOverlayManager;
 import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverlayTouchProxy;
-import com.android.window.flags.Flags;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -276,14 +272,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Default launcher application.
  */
 public class Launcher extends StatefulActivity<LauncherState>
-        implements Callbacks, InvariantDeviceProfile.OnIDPChangeListener,
-        PluginListener<LauncherOverlayPlugin> {
+        implements Callbacks, InvariantDeviceProfile.OnIDPChangeListener{
     public static final String TAG = "Launcher";
 
     public static final ActivityTracker<Launcher> ACTIVITY_TRACKER = new ActivityTracker<>();
@@ -403,7 +399,7 @@ public class Launcher extends StatefulActivity<LauncherState>
     private final CannedAnimationCoordinator mAnimationCoordinator =
             new CannedAnimationCoordinator(this);
 
-    private final List<BackPressHandler> mBackPressedHandlers = new ArrayList<>();
+    //private final List<BackPressHandler> mBackPressedHandlers = new ArrayList<>();
     private boolean mIsColdStartupAfterReboot;
 
     private boolean mIsNaturalScrollingEnabled;
@@ -573,8 +569,6 @@ public class Launcher extends StatefulActivity<LauncherState>
                 Themes.getAttrBoolean(this, R.attr.isWorkspaceDarkText));
 
         mOverlayManager = getDefaultOverlay();
-        PluginManagerWrapper.INSTANCE.get(this).addPluginListener(this,
-                LauncherOverlayPlugin.class, false /* allowedMultiple */);
 
         mRotationHelper.initialize();
         TraceHelper.INSTANCE.endSection();
@@ -582,11 +576,6 @@ public class Launcher extends StatefulActivity<LauncherState>
         getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         setTitle(R.string.home_screen);
         mStartupLatencyLogger.logEnd(LAUNCHER_LATENCY_STARTUP_ACTIVITY_ON_CREATE);
-
-        if (com.android.launcher3.Flags.enableTwoPaneLauncherSettings()) {
-            RuleController.getInstance(this).setRules(
-                    RuleController.parseRules(this, R.xml.split_configuration));
-        }
     }
 
     protected ModelCallbacks createModelCallbacks() {
@@ -594,7 +583,7 @@ public class Launcher extends StatefulActivity<LauncherState>
     }
 
     /**
-     * We only log startup latency in {@link COLD_DEVICE_REBOOTING} type. For other latency types,
+     * We only log startup latency in COLD_DEVICE_REBOOTING type. For other latency types,
      * create a no op implementation.
      */
     private StartupLatencyLogger createStartupLatencyLogger(
@@ -620,7 +609,6 @@ public class Launcher extends StatefulActivity<LauncherState>
      *  <li> auto cancel action mode handler
      *  <li> drag handler
      *  <li> view handler
-     *  <li> registered {@link BackPressHandler}
      *  <li> state handler
      * </ol>
      *
@@ -644,18 +632,18 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
 
         // #3 view handler
-        AbstractFloatingView topView =
+        /*AbstractFloatingView topView =
                 AbstractFloatingView.getTopOpenView(Launcher.this);
         if (topView != null && topView.canHandleBack()) {
             return topView;
-        }
+        }*/
 
         // #4 Custom back handlers
-        for (BackPressHandler handler : mBackPressedHandlers) {
+       /* for (BackPressHandler handler : mBackPressedHandlers) {
             if (handler.canHandleBack()) {
                 return handler;
             }
-        }
+        }*/
 
         // #5 state handler
         return new OnBackAnimationCallback() {
@@ -679,16 +667,6 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     protected LauncherOverlayManager getDefaultOverlay() {
         return new LauncherOverlayManager() { };
-    }
-
-    @Override
-    public void onPluginConnected(LauncherOverlayPlugin overlayManager, Context context) {
-        switchOverlay(() -> overlayManager.createOverlayManager(this));
-    }
-
-    @Override
-    public void onPluginDisconnected(LauncherOverlayPlugin plugin) {
-        switchOverlay(this::getDefaultOverlay);
     }
 
     private void switchOverlay(Supplier<LauncherOverlayManager> overlaySupplier) {
@@ -1695,6 +1673,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
     }
 
+    @SuppressLint("WrongConstant")
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putIntArray(RUNTIME_STATE_CURRENT_SCREEN_IDS,
@@ -1738,7 +1717,6 @@ public class Launcher extends StatefulActivity<LauncherState>
                 mNaturalScrollingChangedListener);
         ScreenOnTracker.INSTANCE.get(this).removeListener(mScreenOnListener);
         mWorkspace.removeFolderListeners();
-        PluginManagerWrapper.INSTANCE.get(this).removePluginListener(this);
 
         mModel.removeCallbacks(this);
         mRotationHelper.destroy();
@@ -2042,9 +2020,12 @@ public class Launcher extends StatefulActivity<LauncherState>
     }
 
     @Override
-    @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void onBackPressed() {
-        getOnBackAnimationCallback().onBackInvoked();
+        if(ATLEAST_U) {
+            getOnBackAnimationCallback().onBackInvoked();
+        }else {
+            super.onBackPressed();
+        }
     }
 
     protected void onStateBack() {
@@ -2184,9 +2165,9 @@ public class Launcher extends StatefulActivity<LauncherState>
      */
     @Override
     public void bindItems(final List<ItemInfo> items, final boolean forceAnimateIcons) {
-        bindInflatedItems(items.stream().map(i -> Pair.create(
-                i, getItemInflater().inflateItem(i, getModelWriter()))).toList(),
-                forceAnimateIcons ? new AnimatorSet() : null);
+            bindInflatedItems(items.stream().map(i -> Pair.create(
+                    i, getItemInflater().inflateItem(i, getModelWriter()))).collect(Collectors.toList()),
+                    forceAnimateIcons ? new AnimatorSet() : null);
     }
 
     @Override
@@ -2711,13 +2692,13 @@ public class Launcher extends StatefulActivity<LauncherState>
         updateDisallowBack();
     }
 
-    protected void addBackAnimationCallback(BackPressHandler callback) {
+    /*protected void addBackAnimationCallback(BackPressHandler callback) {
         mBackPressedHandlers.add(callback);
     }
 
     protected void removeBackAnimationCallback(BackPressHandler callback) {
         mBackPressedHandlers.remove(callback);
-    }
+    }*/
 
     private void updateDisallowBack() {
         if (Flags.enableDesktopWindowingMode()) {
@@ -2839,7 +2820,6 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     /**
      * Returns {@code true} if there are visible tasks with windowing mode set to
-     * {@link android.app.WindowConfiguration#WINDOWING_MODE_FREEFORM}
      */
     public boolean areFreeformTasksVisible() {
         return false; // Base launcher does not track freeform tasks
@@ -3035,7 +3015,7 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     /**
      * Handles an app pair launch; overridden in
-     * {@link com.android.launcher3.uioverrides.QuickstepLauncher}
+     * com.android.launcher3.uioverrides.QuickstepLauncher
      */
     public void launchAppPair(AppPairIcon appPairIcon) {
         // Overridden

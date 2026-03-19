@@ -80,8 +80,7 @@ public class InstallSessionTracker extends PackageInstaller.SessionCallback {
 
         helper.tryQueuePromiseAppIcon(sessionInfo);
 
-        if (Utilities.enableSupportForArchiving() && sessionInfo != null
-                && sessionInfo.isUnarchival()) {
+        if (Utilities.enableSupportForArchiving()) {
             // For archived apps, icon could already be present on the workspace. To make sure
             // the icon state is updated, we send a change event.
             callback.onPackageStateChanged(PackageInstallInfo.fromInstallingState(sessionInfo));

@@ -242,7 +242,7 @@ public class TopTaskTracker extends ISplitScreenListener.Stub implements TaskSta
             List<RunningTaskInfo> visibleNonExcludedTasks = mAllCachedTasks.stream()
                     .filter(t -> t.isVisible
                             && (t.baseIntent.getFlags() & FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) == 0)
-                    .toList();
+                    .collect(Collectors.toList());
             return visibleNonExcludedTasks.isEmpty() ? null
                     : new CachedTaskInfo(visibleNonExcludedTasks);
         }

@@ -304,7 +304,7 @@ public class BubbleBarViewController {
      */
     public void reorderBubbles(List<BubbleBarBubble> newOrder) {
         List<BubbleView> viewList = newOrder.stream().filter(Objects::nonNull)
-                .map(BubbleBarBubble::getView).toList();
+                .map(BubbleBarBubble::getView).collect(Collectors.toList());
         mBarView.reorder(viewList);
     }
 

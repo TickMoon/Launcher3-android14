@@ -22,8 +22,6 @@ import androidx.annotation.DimenRes;
 import androidx.annotation.FractionRes;
 import androidx.annotation.IntegerRes;
 
-import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
-import com.android.systemui.plugins.PluginListener;
 import com.android.systemui.plugins.ResourceProvider;
 
 /**
@@ -34,7 +32,7 @@ import com.android.systemui.plugins.ResourceProvider;
  *
  * To allow customization for a particular resource, add them to dynamic_resources.xml
  */
-public class DynamicResource implements ResourceProvider, PluginListener<ResourceProvider> {
+public class DynamicResource implements ResourceProvider {
 
     private static final MainThreadInitializedObject<DynamicResource> INSTANCE =
             new MainThreadInitializedObject<>(DynamicResource::new);
@@ -44,8 +42,6 @@ public class DynamicResource implements ResourceProvider, PluginListener<Resourc
 
     private DynamicResource(Context context) {
         mContext = context;
-        PluginManagerWrapper.INSTANCE.get(context).addPluginListener(this,
-                ResourceProvider.class, false /* allowedMultiple */);
     }
 
     @Override
@@ -71,16 +67,6 @@ public class DynamicResource implements ResourceProvider, PluginListener<Resourc
     @Override
     public float getFloat(@DimenRes int resId) {
         return mContext.getResources().getFloat(resId);
-    }
-
-    @Override
-    public void onPluginConnected(ResourceProvider plugin, Context context) {
-        mPlugin = plugin;
-    }
-
-    @Override
-    public void onPluginDisconnected(ResourceProvider plugin) {
-        mPlugin = null;
     }
 
     /**

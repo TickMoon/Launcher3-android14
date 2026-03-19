@@ -300,10 +300,10 @@ public class ItemInstallQueue {
                     } else {
                         lai = laiList.get(0);
                         si.intent = makeLaunchIntent(lai);
-                        if (Utilities.enableSupportForArchiving()
+                        /*if (Utilities.enableSupportForArchiving()
                                 && lai.getActivityInfo().isArchived) {
                             si.runtimeStatusFlags |= FLAG_ARCHIVED;
-                        }
+                        }*/
                     }
                     LauncherAppState.getInstance(context).getIconCache()
                             .getTitleAndIcon(si, () -> lai, usePackageIcon, false);

@@ -22,6 +22,7 @@ import static com.android.app.animation.Interpolators.scrollInterpolatorForVeloc
 import static com.android.launcher3.LauncherAnimUtils.SCALE_PROPERTY;
 import static com.android.launcher3.LauncherAnimUtils.SUCCESS_TRANSITION_PROGRESS;
 import static com.android.launcher3.LauncherAnimUtils.TABLET_BOTTOM_SHEET_SUCCESS_TRANSITION_PROGRESS;
+import static com.android.launcher3.Utilities.ATLEAST_U;
 import static com.android.launcher3.allapps.AllAppsTransitionController.REVERT_SWIPE_ALL_APPS_TO_HOME_ANIMATION_DURATION_MS;
 import static com.android.launcher3.util.ScrollableLayoutManager.PREDICTIVE_BACK_MIN_SCALE;
 
@@ -281,15 +282,15 @@ public abstract class AbstractSlideInView<T extends Context & ActivityContext>
         return true;
     }
 
-    @Override
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void onBackProgressed(BackEvent backEvent) {
-        final float progress = backEvent.getProgress();
-        float deceleratedProgress =
-                Interpolators.PREDICTIVE_BACK_DECELERATED_EASE.getInterpolation(progress);
-        mIsBackProgressing = progress > 0f;
-        mSlideInViewScale.updateValue(PREDICTIVE_BACK_MIN_SCALE
-                + (1 - PREDICTIVE_BACK_MIN_SCALE) * (1 - deceleratedProgress));
+        if(ATLEAST_U) {
+            final float progress = backEvent.getProgress();
+            float deceleratedProgress =
+                    Interpolators.PREDICTIVE_BACK_DECELERATED_EASE.getInterpolation(progress);
+            mIsBackProgressing = progress > 0f;
+            mSlideInViewScale.updateValue(PREDICTIVE_BACK_MIN_SCALE
+                    + (1 - PREDICTIVE_BACK_MIN_SCALE) * (1 - deceleratedProgress));
+        }
     }
 
     protected void onScaleProgressChanged() {
@@ -306,9 +307,7 @@ public abstract class AbstractSlideInView<T extends Context & ActivityContext>
         animateSlideInViewToNoScale();
     }
 
-    @Override
     public void onBackCancelled() {
-        super.onBackCancelled();
         animateSlideInViewToNoScale();
     }
 

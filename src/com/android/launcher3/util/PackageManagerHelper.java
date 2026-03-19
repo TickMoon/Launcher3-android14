@@ -109,7 +109,7 @@ public class PackageManagerHelper {
      */
     @SuppressWarnings("NewApi")
     public boolean isAppArchived(@NonNull final String packageName) {
-        final ApplicationInfo info;
+        /*final ApplicationInfo info;
         try {
             info = mPm.getPackageInfo(packageName,
                     PackageManager.PackageInfoFlags.of(
@@ -118,7 +118,8 @@ public class PackageManagerHelper {
         } catch (NameNotFoundException e) {
             Log.e(TAG, "Failed to get applicationInfo for package: " + packageName, e);
             return false;
-        }
+        }*/
+        return false;
     }
 
     /**
@@ -273,7 +274,6 @@ public class PackageManagerHelper {
     /** Returns true in case app is installed on the device or in archived state. */
     @SuppressWarnings("NewApi")
     private boolean isPackageInstalledOrArchived(ApplicationInfo info) {
-        return (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0 || (
-                Utilities.enableSupportForArchiving() && info.isArchived);
+        return (info.flags & ApplicationInfo.FLAG_INSTALLED) != 0;
     }
 }

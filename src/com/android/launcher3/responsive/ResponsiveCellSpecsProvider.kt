@@ -86,6 +86,7 @@ data class CellSpec(
         check(isValid()) { "Invalid CellSpec found." }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     constructor(
         responsiveSpecType: ResponsiveSpecType,
         attrs: TypedArray,

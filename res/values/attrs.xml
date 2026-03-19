@@ -648,4 +648,7 @@
         <attr name="arrowTipBackground" format="color" />
         <attr name="arrowTipTextColor" format="color" />
     </declare-styleable>
+
+    <attr name="disabledIconAlpha" format="float" />
+    <attr name="loadingIconColor" format="color" />
 </resources>

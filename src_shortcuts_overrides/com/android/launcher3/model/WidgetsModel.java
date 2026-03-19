@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Widgets data model that is used by the adapters of the widget views and controllers.
@@ -86,7 +87,7 @@ public class WidgetsModel {
             PackageItemInfo pkgItem = entry.getKey();
             List<WidgetItem> widgetItems = entry.getValue()
                     .stream()
-                    .filter(widgetItemFilter).toList();
+                    .filter(widgetItemFilter).collect(Collectors.toList());
             if (!widgetItems.isEmpty()) {
                 String sectionName = (pkgItem.title == null) ? "" :
                         indexer.computeSectionName(pkgItem.title);

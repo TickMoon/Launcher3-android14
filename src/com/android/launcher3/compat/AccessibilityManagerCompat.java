@@ -19,7 +19,6 @@ package com.android.launcher3.compat;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -27,7 +26,6 @@ import android.view.accessibility.AccessibilityManager;
 import androidx.annotation.Nullable;
 
 import com.android.launcher3.Utilities;
-import com.android.launcher3.testing.shared.TestProtocol;
 
 public class AccessibilityManagerCompat {
 
@@ -66,12 +64,12 @@ public class AccessibilityManagerCompat {
         final AccessibilityManager accessibilityManager = getAccessibilityManagerForTest(context);
         if (accessibilityManager == null) return;
 
-        final Bundle parcel = new Bundle();
+        /*final Bundle parcel = new Bundle();
         parcel.putInt(TestProtocol.STATE_FIELD, stateOrdinal);
 
         sendEventToTest(
                 accessibilityManager, context, TestProtocol.SWITCHED_TO_STATE_MESSAGE, parcel);
-        Log.d(TestProtocol.PERMANENT_DIAG_TAG, "sendStateEventToTest: " + stateOrdinal);
+        Log.d(TestProtocol.PERMANENT_DIAG_TAG, "sendStateEventToTest: " + stateOrdinal);*/
     }
 
     public static void sendTestProtocolEventToTest(Context context, String testProtocolEvent) {

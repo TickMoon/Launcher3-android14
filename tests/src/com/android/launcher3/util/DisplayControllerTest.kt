@@ -102,7 +102,7 @@ class DisplayControllerTest {
                 Answer {
                     // Always create a new copy of bounds
                     val perDisplayBounds = ArrayMap<CachedDisplayInfo, List<WindowBounds>>()
-                    perDisplayBounds[displayInfo] = bounds.toList()
+                    perDisplayBounds[displayInfo] = bounds.collect(Collectors.toList())
                     return@Answer perDisplayBounds
                 }
             )

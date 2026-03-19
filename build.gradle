@@ -6,22 +6,26 @@ buildscript {
     dependencies {
         classpath GRADLE_CLASS_PATH
         classpath PROTOBUF_CLASS_PATH
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0"
     }
 }
 
-final String ANDROID_TOP = "${rootDir}/../../.."
-final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_intermediates/"
+//final String ANDROID_TOP = "${rootDir}/../../.."
+//final String FRAMEWORK_PREBUILTS_DIR = "${ANDROID_TOP}/prebuilts/framework_intermediates/"
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
+apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion COMPILE_SDK
+    namespace 'com.android.launcher3'
+    testNamespace 'com.android.launcher3.tests'
+    compileSdkVersion 34
     buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion 30
-        targetSdkVersion 33
+        minSdkVersion 28
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -35,8 +39,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     // The flavor dimensions for build variants (e.g. aospWithQuickstep, aospWithoutQuickstep)
@@ -56,11 +60,11 @@ android {
             testApplicationId 'com.android.launcher3.tests'
         }
 
-        withQuickstep {
+        /*withQuickstep {
             dimension "recents"
 
             minSdkVersion 28
-        }
+        }*/
 
         withoutQuickstep {
             dimension "recents"
@@ -77,14 +81,15 @@ android {
     sourceSets {
         main {
             res.srcDirs = ['res']
-            java.srcDirs = ['src', 'src_plugins']
+            java.srcDirs = ['src', 'src_plugins', 'src_build_config',
+                            'tests/multivalentTests/shared/']
             manifest.srcFile 'AndroidManifest-common.xml'
             proto {
                 srcDirs = ['protos/', 'protos_overrides/']
             }
         }
 
-        androidTest {
+        /*androidTest {
             res.srcDirs = ['tests/res']
             java.srcDirs = ['tests/src', 'tests/tapl']
             manifest.srcFile "tests/AndroidManifest-common.xml"
@@ -92,7 +97,7 @@ android {
 
         androidTestDebug {
             manifest.srcFile "tests/AndroidManifest.xml"
-        }
+        }*/
 
         aosp {
             java.srcDirs = ['src_flags', 'src_shortcuts_overrides']
@@ -102,9 +107,9 @@ android {
             manifest.srcFile "AndroidManifest.xml"
         }
 
-        aospWithQuickstep {
+       /* aospWithQuickstep {
             manifest.srcFile "quickstep/AndroidManifest-launcher.xml"
-        }
+        }*/
 
         l3go {
             res.srcDirs = ['go/res']
@@ -116,56 +121,75 @@ android {
             manifest.srcFile "AndroidManifest.xml"
         }
 
-        l3goWithQuickstepDebug {
+       /* l3goWithQuickstepDebug {
             manifest.srcFile "quickstep/AndroidManifest-launcher.xml"
-        }
+        }*/
 
         withoutQuickstep {
             java.srcDirs = ['src_ui_overrides']
         }
 
-        withQuickstep {
+        /*withQuickstep {
             res.srcDirs = ['quickstep/res', 'quickstep/recents_ui_overrides/res']
             java.srcDirs = ['quickstep/src', 'quickstep/recents_ui_overrides/src']
             manifest.srcFile "quickstep/AndroidManifest.xml"
-        }
+        }*/
+    }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-Xlint:-dep-ann'  // 禁用 dep-ann 警告
     }
 }
 
 allprojects {
     repositories {
-        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }
-        maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
-        maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
+//        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }
+//        maven { url "../../../prebuilts/fullsdk-darwin/extras/android/m2repository" }
+//        maven { url "../../../prebuilts/fullsdk-linux/extras/android/m2repository" }
         mavenCentral()
         google()
+    }
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+        }
     }
 }
 
 dependencies {
-    implementation "androidx.dynamicanimation:dynamicanimation:${ANDROID_X_VERSION}"
-    implementation "androidx.recyclerview:recyclerview:${ANDROID_X_VERSION}"
-    implementation "androidx.preference:preference:${ANDROID_X_VERSION}"
+    implementation "androidx.dynamicanimation:dynamicanimation:1.1.0"
+    implementation "androidx.recyclerview:recyclerview:1.3.0"
+    implementation "androidx.preference:preference:1.2.1"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"
+    implementation "com.google.android.material:material:1.6.1"
+    implementation "androidx.core:core-ktx:1.9.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
+    implementation 'androidx.slice:slice-core:1.0.0'
+    // Protobuf Lite 运行时库 - Android 项目必须使用 javalite 版本
+    implementation 'com.google.protobuf:protobuf-javalite:3.22.3'
     implementation project(':IconLoader')
-    implementation project(':UiTestsLibLauncher')
-    withQuickstepImplementation project(':SharedLibWrapper')
+    implementation project(':animation')
+    //implementation project(':UiTestsLibLauncher')
+    //withQuickstepImplementation project(':SharedLibWrapper')
 
     // Recents lib dependency
-    withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
+   // withQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/quickstep/libs", include: 'sysui_shared.jar')
 
     // Required for AOSP to compile. This is already included in the sysui_shared.jar
-    withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
+    //withoutQuickstepImplementation fileTree(dir: "${FRAMEWORK_PREBUILTS_DIR}/libs", include: 'plugin_core.jar')
 
     testImplementation 'junit:junit:4.12'
-    testImplementation libs.mockitoInlineExtended
-    androidTestImplementation libs.mockitoInlineExtended
+//    testImplementation libs.mockitoInlineExtended
+//    androidTestImplementation libs.mockitoInlineExtended
     androidTestImplementation "org.mockito:mockito-core:1.9.5"
     androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
     androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.0'
     androidTestImplementation 'com.android.support.test:rules:1.0.0'
     androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
-    androidTestImplementation "androidx.annotation:annotation:${ANDROID_X_VERSION}"
+    androidTestImplementation "androidx.annotation:annotation:1.3.0"
 
     api 'com.airbnb.android:lottie:3.3.0'
 }
@@ -173,12 +197,11 @@ dependencies {
 protobuf {
     // Configure the protoc executable
     protoc {
-        artifact = "com.google.protobuf:protoc:${protocVersion}${PROTO_ARCH_SUFFIX}"
+        artifact = "com.google.protobuf:protoc:3.22.3"
     }
     generateProtoTasks {
         all().each { task ->
             task.builtins {
-                remove java
                 java {
                     option "lite"
                 }

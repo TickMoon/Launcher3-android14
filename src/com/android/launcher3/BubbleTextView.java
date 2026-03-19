@@ -93,7 +93,7 @@ import java.util.Locale;
  * because we want to make the bubble taller than the text and TextView's clip is
  * too aggressive.
  */
-public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
+public class BubbleTextView extends androidx.appcompat.widget.AppCompatTextView implements ItemInfoUpdateReceiver,
         IconLabelDotView, DraggableView, Reorderable {
 
     private static final int DISPLAY_WORKSPACE = 0;

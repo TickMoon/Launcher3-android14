@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.launcher3.util;
 
-import android.os.Build;
-import android.window.OnBackAnimationCallback;
-
-import androidx.annotation.RequiresApi;
-
 /**
- * Extension of {@link OnBackAnimationCallback} that allows a check to determine
- * if this callback supports handling back or not
+ * Extension of closeable which does not throw an exception
  */
-@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-public interface BackPressHandler extends OnBackAnimationCallback {
-    boolean canHandleBack();
+public interface SafeCloseable extends AutoCloseable {
+
+    @Override
+    void close();
 }

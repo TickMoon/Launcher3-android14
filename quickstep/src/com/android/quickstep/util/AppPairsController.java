@@ -308,7 +308,7 @@ public class AppPairsController {
             List<? extends ItemInfo> itemInfos) {
         TaskbarActivityContext context = (TaskbarActivityContext) launchingIconView.getContext();
         List<ComponentKey> componentKeys =
-                itemInfos.stream().map(ItemInfo::getComponentKey).toList();
+                itemInfos.stream().map(ItemInfo::getComponentKey).collect(Collectors.toList());
 
         // Use TopTaskTracker to find the currently running app (or apps)
         TopTaskTracker topTaskTracker = getTopTaskTracker(context);
@@ -334,7 +334,7 @@ public class AppPairsController {
                                     } else {
                                         return INVALID_TASK_ID;
                                     }
-                                }).toList();
+                                }).collect(Collectors.toList());
 
                         if (lastActiveTasksOfAppPair.contains(runningTaskId1)
                                 && lastActiveTasksOfAppPair.contains(runningTaskId2)) {

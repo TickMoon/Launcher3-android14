@@ -1,9 +1,5 @@
 package com.android.launcher3.model;
 
-import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN;
-import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD;
-import static android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_SEARCHBOX;
-
 import static com.android.launcher3.Utilities.ATLEAST_S;
 
 import android.annotation.SuppressLint;
@@ -13,8 +9,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
-
-import androidx.core.os.BuildCompat;
 
 import com.android.launcher3.Flags;
 import com.android.launcher3.InvariantDeviceProfile;
@@ -40,7 +34,7 @@ public class WidgetItem extends ComponentKey {
     public final String label;
     public final CharSequence description;
     public final int spanX, spanY;
-    public final SparseArray<RemoteViews> generatedPreviews;
+    public final SparseArray<RemoteViews> generatedPreviews = null;
 
     public WidgetItem(LauncherAppWidgetProviderInfo info,
             InvariantDeviceProfile idp, IconCache iconCache, Context context,
@@ -54,22 +48,6 @@ public class WidgetItem extends ComponentKey {
 
         spanX = Math.min(info.spanX, idp.numColumns);
         spanY = Math.min(info.spanY, idp.numRows);
-
-        if (BuildCompat.isAtLeastV() && Flags.enableGeneratedPreviews()) {
-            generatedPreviews = new SparseArray<>(3);
-            for (int widgetCategory : new int[] {
-                    WIDGET_CATEGORY_HOME_SCREEN,
-                    WIDGET_CATEGORY_KEYGUARD,
-                    WIDGET_CATEGORY_SEARCHBOX,
-            }) {
-                if ((widgetCategory & widgetInfo.generatedPreviewCategories) != 0) {
-                    generatedPreviews.put(widgetCategory,
-                            helper.loadGeneratedPreview(widgetInfo, widgetCategory));
-                }
-            }
-        } else {
-            generatedPreviews = null;
-        }
     }
 
     public WidgetItem(LauncherAppWidgetProviderInfo info,
@@ -85,7 +63,6 @@ public class WidgetItem extends ComponentKey {
         widgetInfo = null;
         activityInfo = info;
         spanX = spanY = 1;
-        generatedPreviews = null;
     }
 
     /**

@@ -277,12 +277,12 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                             // In case an app is archived, we need to make sure that archived state
                             // in WorkspaceItemInfo is refreshed.
                             if (Utilities.enableSupportForArchiving() && !activities.isEmpty()) {
-                                boolean newArchivalState = activities.get(
+                                /*boolean newArchivalState = activities.get(
                                         0).getActivityInfo().isArchived;
                                 if (newArchivalState != si.isArchived()) {
                                     si.runtimeStatusFlags ^= FLAG_ARCHIVED;
                                     infoUpdated = true;
-                                }
+                                }*/
                             }
                             if (si.itemType == Favorites.ITEM_TYPE_APPLICATION) {
                                 if (activities != null && !activities.isEmpty()) {

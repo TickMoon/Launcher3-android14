@@ -174,9 +174,6 @@ public class InvariantDeviceProfile {
     public int numDatabaseAllAppsColumns;
     public @StyleRes int allAppsStyle;
 
-    /**
-     * Do not query directly. see {@link DeviceProfile#isScalableGrid}.
-     */
     protected boolean isScalable;
     @XmlRes
     public int devicePaddingId = INVALID_RESOURCE_HANDLE;

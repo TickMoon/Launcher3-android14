@@ -228,8 +228,7 @@ public class InstallSessionHelper {
 
     public boolean verifySessionInfo(@Nullable final PackageInstaller.SessionInfo sessionInfo) {
         // For archived apps we always want to show promise icons and the checks below don't apply.
-        if (Utilities.enableSupportForArchiving() && sessionInfo != null
-                && sessionInfo.isUnarchival()) {
+        if (Utilities.enableSupportForArchiving()) {
             return true;
         }
 

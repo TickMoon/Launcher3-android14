@@ -363,7 +363,6 @@ public abstract class BaseActivity extends Activity implements ActivityContext {
      * Used to set the override visibility state, used only to handle the transition home with the
      * recents animation.
      *
-     * @see QuickstepTransitionManager#createWallpaperOpenRunner
      */
     public void addForceInvisibleFlag(@InvisibilityFlags int flag) {
         mForceInvisible |= flag;

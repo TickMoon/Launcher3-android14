@@ -62,6 +62,7 @@ data class ResponsiveSpec(
         check(isValid()) { "Invalid ResponsiveSpec found. $this" }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     constructor(
         responsiveSpecType: ResponsiveSpecType,
         attrs: TypedArray,
