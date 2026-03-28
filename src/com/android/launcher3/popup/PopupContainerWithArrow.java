@@ -199,17 +199,16 @@ public class PopupContainerWithArrow<T extends Context & ActivityContext>
         }
 
         PopupContainerWithArrow<Launcher> container;
-        PopupDataProvider popupDataProvider = launcher.getPopupDataProvider();
-        int deepShortcutCount = popupDataProvider.getShortcutCountForItem(item);
-        List<SystemShortcut> systemShortcuts = launcher.getSupportedShortcuts()
-                .map(s -> s.getShortcut(launcher, item, icon))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<SystemShortcut> systemShortcuts = new ArrayList<>(1);
+        SystemShortcut appInfo = SystemShortcut.APP_INFO.getShortcut(launcher, item, icon);
+        if (appInfo != null) {
+            systemShortcuts.add(appInfo);
+        }
+
         container = (PopupContainerWithArrow) launcher.getLayoutInflater().inflate(
                 R.layout.popup_container, launcher.getDragLayer(), false);
         container.configureForLauncher(launcher, item);
-        container.populateAndShowRows(icon, deepShortcutCount, systemShortcuts);
-        launcher.refreshAndBindWidgetsForPackageUser(PackageUserKey.fromItemInfo(item));
+        container.populateAndShowRows(icon, 0 /* deepShortcutCount */, systemShortcuts);
         container.requestFocus();
         return container;
     }
@@ -247,7 +246,6 @@ public class PopupContainerWithArrow<T extends Context & ActivityContext>
                     R.layout.system_shortcut);
         }
         show();
-        loadAppShortcuts((ItemInfo) originalIcon.getTag());
     }
 
     /**

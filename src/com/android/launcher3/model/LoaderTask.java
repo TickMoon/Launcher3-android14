@@ -254,31 +254,10 @@ public class LoaderTask implements Runnable {
             verifyNotStopped();
 
             // second step
-            Trace.beginSection("LoadAllApps");
-            List<LauncherActivityInfo> allActivityList;
-            try {
-                allActivityList = loadAllApps();
-            } finally {
-                Trace.endSection();
-            }
-            logASplit("loadAllApps");
-
-            if (FeatureFlags.CHANGE_MODEL_DELEGATE_LOADING_ORDER.get()) {
-                mModelDelegate.loadAndBindAllAppsItems(mUserManagerState,
-                        mLauncherBinder.mCallbacksList, mShortcutKeyToPinnedShortcuts);
-                logASplit("allAppsDelegateItems");
-            }
-            verifyNotStopped();
-            mLauncherBinder.bindAllApps();
-            logASplit("bindAllApps");
-
-            verifyNotStopped();
+            // AllApps 页面已禁用：跳过 load/bind all apps 以及 all-apps 图标批量更新。
+            // 桌面图标会在 Workspace DB 加载时按需/批量加载。
             IconCacheUpdateHandler updateHandler = mIconCache.getUpdateHandler();
             setIgnorePackages(updateHandler);
-            updateHandler.updateIcons(allActivityList,
-                    LauncherActivityCachingLogic.newInstance(mApp.getContext()),
-                    mApp.getModel()::onPackageIconsUpdated);
-            logASplit("update icon cache");
 
             verifyNotStopped();
             logASplit("save shortcuts in icon cache");
@@ -412,8 +391,19 @@ public class LoaderTask implements Runnable {
 
         ModelDbController dbController = mApp.getModel().getModelDbController();
         dbController.tryMigrateDB(restoreEventLogger);
-        Log.d(TAG, "loadWorkspace: loading default favorites");
-        dbController.loadDefaultFavoritesIfNecessary();
+
+        // 桌面=唯一入口：仅在数据库为空时，不再加载默认 favorites.xml，而是把“全部应用”铺到 Workspace。
+        Log.d(TAG, "loadWorkspace: loading all apps onto workspace (default favorites disabled)");
+        android.database.Cursor _c = dbController.query(TABLE_NAME, new String[] { Favorites._ID },
+                selection, null, Favorites._ID + " LIMIT 1");
+        try {
+            if (_c.getCount() == 0) {
+                dbController.createEmptyDB();
+                tryLoadAllAppsOntoWorkspace(dbController);
+            }
+        } finally {
+            com.android.launcher3.util.IOUtils.closeSilently(_c);
+        }
 
         synchronized (mBgDataModel) {
             mBgDataModel.clear();
@@ -460,8 +450,7 @@ public class LoaderTask implements Runnable {
             if (!FeatureFlags.CHANGE_MODEL_DELEGATE_LOADING_ORDER.get()) {
                 mModelDelegate.loadAndBindWorkspaceItems(mUserManagerState,
                         mLauncherBinder.mCallbacksList, mShortcutKeyToPinnedShortcuts);
-                mModelDelegate.loadAndBindAllAppsItems(mUserManagerState,
-                        mLauncherBinder.mCallbacksList, mShortcutKeyToPinnedShortcuts);
+                // AllApps 页面已禁用：跳过 delegate 的 all-apps load/bind。
                 mModelDelegate.loadAndBindOtherItems(mLauncherBinder.mCallbacksList);
                 mModelDelegate.markActive();
             }
@@ -734,6 +723,68 @@ public class LoaderTask implements Runnable {
 
         mBgAllAppsList.getAndResetChangeFlag();
         return allActivityList;
+    }
+
+    private void tryLoadAllAppsOntoWorkspace(ModelDbController dbController) {
+        // 目标：首次启动时把所有可启动 Activity 作为桌面图标铺到 Workspace。
+        // 备注：这里直接写入 DB（favorites 表），随后 loadWorkspaceImpl 会从 DB 读回并绑定。
+        final List<LauncherActivityInfo> allActivityList = loadAllApps();
+        if (allActivityList.isEmpty()) {
+            return;
+        }
+
+        final int columns = mApp.getInvariantDeviceProfile().numColumns;
+        final int rows = mApp.getInvariantDeviceProfile().numRows;
+        if (columns <= 0 || rows <= 0) {
+            return;
+        }
+        final int cellsPerScreen = columns * rows;
+
+
+        final ArrayList<LauncherActivityInfo> validList = new ArrayList<>(allActivityList.size());
+        for (LauncherActivityInfo lai : allActivityList) {
+            if (lai == null) {
+                continue;
+            }
+            try {
+                if (lai.getApplicationInfo() == null) {
+                    continue;
+                }
+                if (!lai.getApplicationInfo().enabled) {
+                    continue;
+                }
+            } catch (Error error) {
+                continue;
+            }
+            validList.add(lai);
+        }
+
+        int index = 0;
+        for (LauncherActivityInfo lai : validList) {
+            AppInfo appInfo = new AppInfo(lai, mUserCache.getUserInfo(lai.getUser()),
+                    mUserManagerState.isUserQuiet(lai.getUser()));
+            WorkspaceItemInfo wii = appInfo.makeWorkspaceItem(mApp.getContext());
+
+            int screen = index / cellsPerScreen;
+            int pos = index % cellsPerScreen;
+            int cellX = pos % columns;
+            int cellY = pos / columns;
+            index++;
+
+            // 生成 ID + 写入必要字段
+            wii.id = dbController.generateNewItemId();
+            wii.container = Favorites.CONTAINER_DESKTOP;
+            wii.screenId = screen;
+            wii.cellX = cellX;
+            wii.cellY = cellY;
+            wii.rank = 0;
+
+            // 直接落库
+            android.content.ContentValues values = new android.content.ContentValues();
+            wii.onAddToDatabase(new com.android.launcher3.util.ContentWriter(values, mApp.getContext()));
+            values.put(Favorites._ID, wii.id);
+            dbController.insert(Favorites.TABLE_NAME, values);
+        }
     }
 
     private List<ShortcutInfo> loadDeepShortcuts() {

@@ -322,6 +322,9 @@ public class DropTargetBar extends FrameLayout
      */
     @Override
     public void onDragStart(DropTarget.DragObject dragObject, DragOptions options) {
+        // Only show the top drop target bar if at least one button is visible for this drag.
+        //int visibleCount = getVisibleButtons(mTempTargets);
+        //animateToVisibility(visibleCount > 0);
         animateToVisibility(true);
     }
 

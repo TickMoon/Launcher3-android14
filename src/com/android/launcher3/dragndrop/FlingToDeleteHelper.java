@@ -80,7 +80,7 @@ public class FlingToDeleteHelper {
      * @return the vector at which the item was flung, or null if no fling was detected.
      */
     private PointF isFlingingToDelete() {
-        if (mVelocityTracker == null) return null;
+        /*if (mVelocityTracker == null) return null;
         if (mDropTarget == null) {
             mDropTarget = (ButtonDropTarget) mLauncher.findViewById(R.id.delete_target_text);
         }
@@ -102,7 +102,7 @@ public class FlingToDeleteHelper {
         }
         if (theta <= Math.toRadians(MAX_FLING_DEGREES)) {
             return vel;
-        }
+        }*/
         return null;
     }
 

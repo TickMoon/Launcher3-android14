@@ -292,7 +292,7 @@ public class ModelDbController {
         if (LauncherPrefs.get(mContext).get(getEmptyDbCreatedKey())) {
             // If we have already create a new DB, ignore migration
             Log.d(TAG, "migrateGridIfNeeded: new DB already created, skipping migration");
-            return false;
+            return true;
         }
         InvariantDeviceProfile idp = LauncherAppState.getIDP(mContext);
         if (!GridSizeMigrationUtil.needsToMigrate(mContext, idp)) {

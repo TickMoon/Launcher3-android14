@@ -147,30 +147,13 @@ public class AllAppsSwipeController extends AbstractStateChangeTouchController {
 
     @Override
     protected boolean canInterceptTouch(MotionEvent ev) {
-        if (mCurrentAnimation != null) {
-            // If we are already animating from a previous state, we can intercept.
-            return true;
-        }
-        if (AbstractFloatingView.getTopOpenView(mLauncher) != null) {
-            return false;
-        }
-        if (!mLauncher.isInState(NORMAL) && !mLauncher.isInState(ALL_APPS)) {
-            // Don't listen for the swipe gesture if we are already in some other state.
-            return false;
-        }
-        if (mLauncher.isInState(ALL_APPS) && !mLauncher.getAppsView().shouldContainerScroll(ev)) {
-            return false;
-        }
-        return true;
+        // AllApps 页面已禁用：不拦截手势，不做 NORMAL <-> ALL_APPS 的切换。
+        return false;
     }
 
     @Override
     protected LauncherState getTargetState(LauncherState fromState, boolean isDragTowardPositive) {
-        if (fromState == NORMAL && shouldOpenAllApps(isDragTowardPositive)) {
-            return ALL_APPS;
-        } else if (fromState == ALL_APPS && !isDragTowardPositive) {
-            return NORMAL;
-        }
+        // AllApps 页面已禁用：保持原状态。
         return fromState;
     }
 
