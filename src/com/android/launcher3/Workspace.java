@@ -47,6 +47,7 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -320,6 +321,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         setHapticFeedbackEnabled(false);
         initWorkspace();
 
+        // Enable circular/looping scrolling for workspace
+        mIsLoopingEnabled = true;
+
         // Disable multitouch across the workspace/all apps/customize tray
         setMotionEventSplittingEnabled(true);
         setOnTouchListener(new WorkspaceTouchListener(mLauncher, this));
@@ -458,6 +462,8 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     public void onDragStart(DragObject dragObject, DragOptions options) {
+        mIsLoopingEnabled = false;
+
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enforceDragParity("onDragStart", 0, 0);
         }
@@ -517,6 +523,8 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     public void onDragEnd() {
+        mIsLoopingEnabled = true;
+
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enforceDragParity("onDragEnd", 0, 0);
         }
@@ -1262,7 +1270,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     @Override
     protected void snapToDestination() {
         if (mOverlayEdgeEffect != null && !mOverlayEdgeEffect.isFinished()) {
-            snapToPageImmediately(0);
+            if (!mIsLoopingEnabled) {
+                snapToPageImmediately(0);
+            }
         } else {
             super.snapToDestination();
         }
@@ -1296,7 +1306,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     @Override
     protected boolean shouldFlingForVelocity(int velocityX) {
         // When the overlay is moving, the fling or settle transition is controlled by the overlay.
-        return Float.compare(Math.abs(mOverlayProgress), 0) == 0
+        return (mIsLoopingEnabled || Float.compare(Math.abs(mOverlayProgress), 0) == 0)
                 && super.shouldFlingForVelocity(velocityX);
     }
 
@@ -3202,7 +3212,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     @Override
     public boolean scrollLeft() {
         boolean result = false;
-        if (!mIsSwitchingState && workspaceInScrollableState()) {
+        if (mIsLoopingEnabled && !mIsSwitchingState && workspaceInScrollableState()
+                && getNextPage() <= 0 && getPageCount() > getPanelCount()
+                && !hasOverlay()) {
+            result = super.scrollLeft();
+        } else if (!mIsSwitchingState && workspaceInScrollableState()) {
             result = super.scrollLeft();
         }
         Folder openFolder = Folder.getOpen(mLauncher);
@@ -3215,7 +3229,10 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     @Override
     public boolean scrollRight() {
         boolean result = false;
-        if (!mIsSwitchingState && workspaceInScrollableState()) {
+        if (mIsLoopingEnabled && !mIsSwitchingState && workspaceInScrollableState()
+                && getNextPage() >= getChildCount() - 1 && getPageCount() > getPanelCount()) {
+            result = super.scrollRight();
+        } else if (!mIsSwitchingState && workspaceInScrollableState()) {
             result = super.scrollRight();
         }
         Folder openFolder = Folder.getOpen(mLauncher);
@@ -3487,6 +3504,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     protected boolean canAnnouncePageDescription() {
         // Disable announcements while overscrolling potentially to overlay screen because if we end
         // up on the overlay screen, it will take care of announcing itself.
+        if (mIsLoopingEnabled) {
+            return true;
+        }
         return Float.compare(mOverlayProgress, 0f) == 0;
     }
 
@@ -3494,6 +3514,65 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     protected String getCurrentPageDescription() {
         int pageIndex = (mNextPage != INVALID_PAGE) ? mNextPage : mCurrentPage;
         return getPageDescription(pageIndex);
+    }
+
+    /**
+     * Override dispatchDraw to draw the wrap-around page when scrolling beyond boundaries.
+     * This creates the visual illusion of seamless circular scrolling.
+     */
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+
+        if (!mIsLoopingEnabled || getPageCount() <= getPanelCount()) {
+            return;
+        }
+
+        int scrollX = getScrollX();
+        boolean isBeforeFirstPage = scrollX < mMinScroll;
+        boolean isAfterLastPage = scrollX > mMaxScroll;
+
+        if (!isBeforeFirstPage && !isAfterLastPage) {
+            return;
+        }
+
+        long drawingTime = getDrawingTime();
+        int childCount = getChildCount();
+
+        if (childCount == 0) {
+            return;
+        }
+
+        // Calculate the total width of all pages including spacing
+        // offset = distance to translate the wrap-around page so it appears adjacent
+        int lastPageScroll = getScrollForPage(childCount - 1);
+        int firstPageScroll = getScrollForPage(0);
+        int totalScrollSpan = lastPageScroll - firstPageScroll + getWidth() + mPageSpacing;
+
+        final int restoreCount = canvas.save();
+        canvas.clipRect(scrollX, 0, scrollX + getWidth(), getHeight());
+
+        if (isBeforeFirstPage) {
+            // Scrolling before first page: draw last page to the left
+            View lastPage = getPageAt(childCount - 1);
+            if (lastPage != null) {
+                canvas.save();
+                canvas.translate(-totalScrollSpan, 0);
+                drawChild(canvas, lastPage, drawingTime);
+                canvas.restore();
+            }
+        } else if (isAfterLastPage) {
+            // Scrolling after last page: draw first page to the right
+            View firstPage = getPageAt(0);
+            if (firstPage != null) {
+                canvas.save();
+                canvas.translate(totalScrollSpan, 0);
+                drawChild(canvas, firstPage, drawingTime);
+                canvas.restore();
+            }
+        }
+
+        canvas.restoreToCount(restoreCount);
     }
 
     /**

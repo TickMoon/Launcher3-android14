@@ -86,6 +86,8 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
 
     private boolean mFreeScroll = false;
 
+    protected boolean mIsLoopingEnabled = false;
+
     private int mFlingThresholdVelocity;
     private int mEasyFlingThresholdVelocity;
     private int mMinFlingVelocity;
@@ -293,6 +295,10 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
     }
 
     private int validateNewPage(int newPage) {
+        if (mIsLoopingEnabled && getPageCount() > getPanelCount()) {
+            // In looping mode, don't clamp, just wrap
+            return wrapPageIndex(newPage);
+        }
         newPage = ensureWithinScrollBounds(newPage);
         // Ensure that it is clamped by the actual set of children in all cases
         newPage = Utilities.boundToRange(newPage, 0, getPageCount() - 1);
@@ -302,6 +308,22 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
             newPage = getLeftmostVisiblePageForIndex(newPage);
         }
         return newPage;
+    }
+
+    protected int wrapPageIndex(int page) {
+        int pageCount = getPageCount();
+        if (pageCount <= 0) return 0;
+        int panelCount = getPanelCount();
+        if (page < 0) {
+            page = pageCount - panelCount;
+        } else if (page >= pageCount) {
+            page = 0;
+        }
+        page = Utilities.boundToRange(page, 0, pageCount - 1);
+        if (panelCount > 1) {
+            page = getLeftmostVisiblePageForIndex(page);
+        }
+        return page;
     }
 
     /**
@@ -526,10 +548,13 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
 
     @Override
     public void scrollTo(int x, int y) {
-        x = Utilities.boundToRange(x,
-                mOrientationHandler.getPrimaryValue(mMinScroll, 0), mMaxScroll);
-        y = Utilities.boundToRange(y,
-                mOrientationHandler.getPrimaryValue(0, mMinScroll), mMaxScroll);
+        if (!mIsLoopingEnabled || getPageCount() <= getPanelCount()) {
+            x = Utilities.boundToRange(x,
+                    mOrientationHandler.getPrimaryValue(mMinScroll, 0), mMaxScroll);
+            y = Utilities.boundToRange(y,
+                    mOrientationHandler.getPrimaryValue(0, mMinScroll), mMaxScroll);
+        }
+        // In looping mode, allow scroll beyond bounds for seamless wrap
         super.scrollTo(x, y);
     }
 
@@ -556,6 +581,14 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
 
     protected boolean computeScrollHelper() {
         if (mScroller.computeScrollOffset()) {
+            // Handle looping: when scroller finishes at a virtual position, reset to real position
+            if (mIsLoopingEnabled && getPageCount() > getPanelCount() && isPageScrollsInitialized()) {
+                int newPos = mScroller.getCurrX();
+                if (newPos < mMinScroll || newPos > mMaxScroll) {
+                    // Allow it to scroll to virtual position, will be corrected on finish
+                }
+            }
+
             // Don't bother scrolling if the page does not need to be moved
             int oldPos = mOrientationHandler.getPrimaryScroll(this);
             int newPos = mScroller.getCurrX();
@@ -591,6 +624,16 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
             mCurrentPage = validateNewPage(mNextPage);
             mCurrentScrollOverPage = mCurrentPage;
             mNextPage = INVALID_PAGE;
+
+            // Looping: after page switch completes, silently reset scroll to the real page position
+            if (mIsLoopingEnabled && getPageCount() > getPanelCount() && isPageScrollsInitialized()) {
+                int realScroll = getScrollForPage(mCurrentPage);
+                int currentScroll = mOrientationHandler.getPrimaryScroll(this);
+                if (currentScroll != realScroll) {
+                    mOrientationHandler.setPrimary(this, VIEW_SCROLL_TO, realScroll);
+                }
+            }
+
             notifyPageSwitchListener(prevPage);
 
             // We don't want to trigger a page end moving unless the page has settled
@@ -1427,6 +1470,33 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
                                 ? mCurrentPage : mCurrentPage + getPanelCount();
                         runOnPageScrollsInitialized(
                                 () -> snapToPageWithVelocity(finalPage, velocity));
+                    } else if (mIsLoopingEnabled && getPageCount() > getPanelCount()) {
+                        // Looping: at boundary pages, scroll to virtual position then reset
+                        if (((isSignificantMove && isDeltaLeft && !isFling) ||
+                                (isFling && isVelocityLeft)) &&
+                                mCurrentPage >= getChildCount() - getPanelCount()) {
+                            // At last page, going forward -> loop to first
+                            // Use virtual scroll position beyond mMaxScroll
+                            runOnPageScrollsInitialized(() -> {
+                                mNextPage = 0;
+                                int virtualScroll = mMaxScroll + getWidth() + mPageSpacing;
+                                int currentScroll = mOrientationHandler.getPrimaryScroll(PagedView.this);
+                                snapToPage(0, virtualScroll - currentScroll, getSnapAnimationDuration());
+                            });
+                        } else if (((isSignificantMove && !isDeltaLeft && !isFling) ||
+                                (isFling && !isVelocityLeft)) &&
+                                mCurrentPage <= 0) {
+                            // At first page, going backward -> loop to last
+                            int lastPage = getChildCount() - getPanelCount();
+                            runOnPageScrollsInitialized(() -> {
+                                mNextPage = lastPage;
+                                int virtualScroll = mMinScroll - getWidth() - mPageSpacing;
+                                int currentScroll = mOrientationHandler.getPrimaryScroll(PagedView.this);
+                                snapToPage(lastPage, virtualScroll - currentScroll, getSnapAnimationDuration());
+                            });
+                        } else {
+                            runOnPageScrollsInitialized(this::snapToDestination);
+                        }
                     } else {
                         runOnPageScrollsInitialized(this::snapToDestination);
                     }
@@ -1775,16 +1845,33 @@ public abstract class PagedView<T extends View & PageIndicator> extends ViewGrou
     }
 
     public boolean scrollLeft() {
-        if (getNextPage() > 0) {
-            snapToPage(getNextPage() - getPanelCount());
+        int nextPage = getNextPage();
+        if (nextPage > 0) {
+            snapToPage(nextPage - getPanelCount());
+            return true;
+        } else if (mIsLoopingEnabled && getPageCount() > getPanelCount()) {
+            int lastPage = getPageCount() - getPanelCount();
+            mNextPage = lastPage;
+            int virtualScroll = mMinScroll - getWidth() - mPageSpacing;
+            int currentScroll = mOrientationHandler.getPrimaryScroll(this);
+            int delta = virtualScroll - currentScroll;
+            snapToPage(lastPage, delta, getSnapAnimationDuration());
             return true;
         }
         return mAllowOverScroll;
     }
 
     public boolean scrollRight() {
-        if (getNextPage() < getChildCount() - 1) {
-            snapToPage(getNextPage() + getPanelCount());
+        int nextPage = getNextPage();
+        if (nextPage < getChildCount() - 1) {
+            snapToPage(nextPage + getPanelCount());
+            return true;
+        } else if (mIsLoopingEnabled && getPageCount() > getPanelCount()) {
+            mNextPage = 0;
+            int virtualScroll = mMaxScroll + getWidth() + mPageSpacing;
+            int currentScroll = mOrientationHandler.getPrimaryScroll(this);
+            int delta = virtualScroll - currentScroll;
+            snapToPage(0, delta, getSnapAnimationDuration());
             return true;
         }
         return mAllowOverScroll;
