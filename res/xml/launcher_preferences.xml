@@ -24,6 +24,12 @@
         android:persistent="false"
         android:widgetLayout="@layout/notification_pref_warning" />
 
+    <SwitchPreference
+        android:key="pref_minus_one"
+        android:title="@string/minus_one_setting"
+        android:summary="@string/minus_one_summary"
+        android:defaultValue="false" />
+
     <!--
       LAUNCHER_HOME_SCREEN_ROTATION_ENABLED(615)
       LAUNCHER_HOME_SCREEN_ROTATION_DISABLED(616)

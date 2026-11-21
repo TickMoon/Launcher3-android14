@@ -281,6 +281,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     // State related to Launcher Overlay
     private OverlayEdgeEffect mOverlayEdgeEffect;
     private boolean mOverlayShown = false;
+    private boolean mMinusOneEnabled;
     private float mOverlayProgress; // 1 -> overlay completely visible, 0 -> home visible
     private final List<LauncherOverlayCallbacks> mOverlayCallbacks = new ArrayList<>();
 
@@ -1260,6 +1261,18 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return mOverlayEdgeEffect != null;
     }
 
+    public boolean isOverlayMovingOrShown() {
+        return mOverlayProgress > 0;
+    }
+
+    public void setMinusOneEnabled(boolean enabled) {
+        if (enabled == mMinusOneEnabled) return;
+        if (isPageScrollsInitialized() && getPageCount() > 0) {
+            setCurrentPage(getNextPage());
+        }
+        mMinusOneEnabled = enabled;
+    }
+
     @Override
     protected void snapToDestination() {
         if (mOverlayEdgeEffect != null && !mOverlayEdgeEffect.isFinished()) {
@@ -1271,8 +1284,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     protected int getLoopPageStep() {
-        if (mDragController == null || mDragController.isDragging() || workspaceInModalState()
-                || !isPageScrollsInitialized() || getPageCount() <= getPanelCount()) {
+        if (mMinusOneEnabled || mDragController == null || mDragController.isDragging()
+                || workspaceInModalState() || !isPageScrollsInitialized()
+                || getPageCount() <= getPanelCount()) {
             return 0;
         }
         // Use laid-out snap positions, including inter-page spacing and both panels on tablets.

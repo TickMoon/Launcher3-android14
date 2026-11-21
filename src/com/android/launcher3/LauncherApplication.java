@@ -25,6 +25,8 @@ public class LauncherApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        MainProcessInitializer.initialize(this);
+        if (!getProcessName().equals(getPackageName() + ":minusone")) {
+            MainProcessInitializer.initialize(this);
+        }
     }
 }

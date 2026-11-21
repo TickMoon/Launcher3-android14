@@ -222,11 +222,12 @@ public class DragLayer extends BaseDragLayer<Launcher> implements LauncherOverla
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        ev.offsetLocation(getTranslationX(), 0);
+        float translation = getTranslationX();
+        ev.offsetLocation(translation, 0);
         try {
             return super.dispatchTouchEvent(ev);
         } finally {
-            ev.offsetLocation(-getTranslationX(), 0);
+            ev.offsetLocation(-translation, 0);
         }
     }
 

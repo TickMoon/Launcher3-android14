@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="minus_one_setting">负一屏</string>
+    <string name="minus_one_summary">从桌面首页滑动打开今日概览，开启时关闭首尾循环翻页。</string>
+    <string name="minus_one_title">今日概览</string>
+    <string name="minus_one_count">已点击 %1$d 次</string>
+    <string-array name="minus_one_ideas">
+        <item>早晨散步</item>
+        <item>挑一本通勤时读的书</item>
+        <item>安排午间休息</item>
+        <item>出门拍一张照片</item>
+        <item>记下一个新想法</item>
+        <item>听一张喜欢的专辑</item>
+        <item>挑选晚餐食谱</item>
+        <item>留一点时间做拉伸</item>
+        <item>和朋友聊聊天</item>
+        <item>给明天的自己留句话</item>
+    </string-array>
+</resources>

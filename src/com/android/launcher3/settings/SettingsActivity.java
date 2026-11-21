@@ -52,6 +52,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.launcher3.BuildConfig;
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.R;
+import com.android.launcher3.minusone.MinusOneOverlay;
 import com.android.launcher3.model.WidgetsModel;
 import com.android.launcher3.states.RotationHelper;
 import com.android.launcher3.uioverrides.flags.DeveloperOptionsUI;
@@ -237,6 +238,8 @@ public class SettingsActivity extends FragmentActivity
          */
         protected boolean initPreference(Preference preference) {
             switch (preference.getKey()) {
+                case MinusOneOverlay.PREFERENCE:
+                    return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R;
                 case NOTIFICATION_DOTS_PREFERENCE_KEY:
                     return !WidgetsModel.GO_DISABLE_NOTIFICATION_DOTS;
 

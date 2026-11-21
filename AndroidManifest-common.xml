@@ -78,6 +78,11 @@
         android:restoreAnyVersion="true"
         android:supportsRtl="true" >
 
+        <service
+            android:name="com.android.launcher3.minusone.MinusOneService"
+            android:exported="false"
+            android:process=":minusone" />
+
         <!-- Intent received when a session is committed -->
         <receiver
             android:name="com.android.launcher3.SessionCommitReceiver"

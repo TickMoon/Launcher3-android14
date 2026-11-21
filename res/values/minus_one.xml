@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="minus_one_setting">Leftmost page</string>
+    <string name="minus_one_summary">Swipe from the first Home screen to open Today. Home screens stop at both ends.</string>
+    <string name="minus_one_title">Today</string>
+    <string name="minus_one_count">Tapped %1$d times</string>
+    <string-array name="minus_one_ideas">
+        <item>Morning walk</item>
+        <item>Choose a book for the commute</item>
+        <item>Plan a lunch break</item>
+        <item>Take a photo outside</item>
+        <item>Write down an idea</item>
+        <item>Listen to a favorite album</item>
+        <item>Pick a recipe for dinner</item>
+        <item>Make time for a stretch</item>
+        <item>Catch up with a friend</item>
+        <item>Leave a note for tomorrow</item>
+    </string-array>
+</resources>

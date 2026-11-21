@@ -103,7 +103,8 @@ public class OverlayEdgeEffect extends EdgeEffectCompat {
     public void onRelease(MotionEvent ev) {
         if (mIsScrolling) {
             int originalAction = ev.getAction();
-            ev.setAction(MotionEvent.ACTION_UP);
+            ev.setAction(originalAction == MotionEvent.ACTION_CANCEL
+                    ? MotionEvent.ACTION_CANCEL : MotionEvent.ACTION_UP);
             mOverlay.onOverlayMotionEvent(ev, mDistance);
             ev.setAction(originalAction);
 

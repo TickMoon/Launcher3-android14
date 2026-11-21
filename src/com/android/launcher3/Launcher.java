@@ -195,6 +195,7 @@ import com.android.launcher3.logging.InstanceIdSequence;
 import com.android.launcher3.logging.StartupLatencyLogger;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.logging.StatsLogManager.LauncherLatencyEvent;
+import com.android.launcher3.minusone.MinusOneOverlay;
 import com.android.launcher3.model.BgDataModel.Callbacks;
 import com.android.launcher3.model.ItemInstallQueue;
 import com.android.launcher3.model.ModelWriter;
@@ -617,6 +618,9 @@ public class Launcher extends StatefulActivity<LauncherState>
     @NonNull
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     protected OnBackAnimationCallback getOnBackAnimationCallback() {
+        if (mWorkspace != null && mWorkspace.isOverlayMovingOrShown()) {
+            return () -> mOverlayManager.hideOverlay(true);
+        }
         // #1 auto cancel action mode handler
         if (isInAutoCancelActionMode()) {
             return this::finishAutoCancelActionMode;
@@ -662,6 +666,9 @@ public class Launcher extends StatefulActivity<LauncherState>
     }
 
     protected LauncherOverlayManager getDefaultOverlay() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return new MinusOneOverlay(this);
+        }
         return new LauncherOverlayManager() { };
     }
 
@@ -1989,6 +1996,10 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     @Override
     public void onBackPressed() {
+        if (mWorkspace != null && mWorkspace.isOverlayMovingOrShown()) {
+            mOverlayManager.hideOverlay(true);
+            return;
+        }
         if(ATLEAST_U) {
             getOnBackAnimationCallback().onBackInvoked();
         }else {
