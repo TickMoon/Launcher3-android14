@@ -1269,7 +1269,22 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     }
 
     @Override
+    protected int getLoopPageStep() {
+        if (mDragController == null || mDragController.isDragging() || workspaceInModalState()
+                || !isPageScrollsInitialized() || getPageCount() <= getPanelCount()) {
+            return 0;
+        }
+        // Use laid-out snap positions, including inter-page spacing and both panels on tablets.
+        return Math.abs(getScrollForPage(getPanelCount()) - getScrollForPage(0));
+    }
+
+    @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        if (l < mMinScroll || l > mMaxScroll || oldl < mMinScroll || oldl > mMaxScroll) {
+            for (int i = 0; i < getPageCount(); i++) {
+                getPageAt(i).setTranslationX(getLoopOffset(i, l));
+            }
+        }
         super.onScrollChanged(l, t, oldl, oldt);
 
         // Update the page indicator progress.

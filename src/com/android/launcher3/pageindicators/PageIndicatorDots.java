@@ -186,6 +186,20 @@ public class PageIndicatorDots extends View implements Insettable, PageIndicator
 
         mTotalScroll = totalScroll;
 
+        int last = mNumPages - 1;
+        if (totalScroll > 0 && (currentScroll < 0 || currentScroll > totalScroll)) {
+            // Track the virtual adjacent page directly while crossing the workspace seam.
+            if (mAnimator != null) stopAllAnimations();
+            mFinalPosition = (float) currentScroll / totalScroll * last;
+            CURRENT_POSITION.set(this, mFinalPosition);
+            if (mShouldAutoHide) hideAfterDelay();
+            return;
+        }
+        if (mCurrentPosition < 0 || mCurrentPosition > last) {
+            // The pager has returned to real coordinates; resume half-step animations here.
+            mFinalPosition = currentScroll < totalScroll / 2 ? 0 : last;
+            CURRENT_POSITION.set(this, mFinalPosition);
+        }
         int scrollPerPage = totalScroll / (mNumPages - 1);
         int pageToLeft = scrollPerPage == 0 ? 0 : currentScroll / scrollPerPage;
         int pageToLeftScroll = pageToLeft * scrollPerPage;
@@ -441,12 +455,24 @@ public class PageIndicatorDots extends View implements Insettable, PageIndicator
 
             // Here we draw the current page indicator
             mPaginationPaint.setAlpha(alpha);
-            canvas.drawRoundRect(getActiveRect(), mDotRadius, mDotRadius, mPaginationPaint);
+            RectF active = getActiveRect();
+            if (mCurrentPosition < 0 || mCurrentPosition > mNumPages - 1) {
+                float period = mNumPages * mCircleGap;
+                float trackLeft = (getWidth() - period) / 2;
+                int save = canvas.save();
+                canvas.clipRect(trackLeft, 0, trackLeft + period, getHeight());
+                canvas.drawRoundRect(active, mDotRadius, mDotRadius, mPaginationPaint);
+                canvas.translate((mCurrentPosition < 0) != mIsRtl ? period : -period, 0);
+                canvas.drawRoundRect(active, mDotRadius, mDotRadius, mPaginationPaint);
+                canvas.restoreToCount(save);
+            } else {
+                canvas.drawRoundRect(active, mDotRadius, mDotRadius, mPaginationPaint);
+            }
         }
     }
 
     private RectF getActiveRect() {
-        float startCircle = (int) mCurrentPosition;
+        float startCircle = (float) Math.floor(mCurrentPosition);
         float delta = mCurrentPosition - startCircle;
         float diameter = 2 * mDotRadius;
         float startX = ((float) getWidth() / 2)
