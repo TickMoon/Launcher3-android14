@@ -26,8 +26,12 @@ android {
     defaultConfig {
         minSdkVersion 28
         targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
+        def (major, minor, patch) = [2, 0, 0]
+        if (!(major in 1..9) || !(minor in 0..99) || !(patch in 0..99)) {
+            throw new GradleException("Five-digit versionCode requires major 1-9, minor and patch 0-99")
+        }
+        versionCode(major * 10000 + minor * 100 + patch)
+        versionName "${major}.${minor}.${patch}"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
