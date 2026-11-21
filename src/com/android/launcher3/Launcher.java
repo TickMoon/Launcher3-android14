@@ -102,7 +102,6 @@ import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.ItemInfoMatcher.forFolderMatch;
 import static com.android.launcher3.util.SettingsCache.TOUCHPAD_NATURAL_SCROLLING;
 
-import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
@@ -169,8 +168,6 @@ import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsRecyclerView;
 import com.android.launcher3.allapps.AllAppsTransitionController;
-import com.android.launcher3.allapps.DiscoveryBounce;
-import com.android.launcher3.anim.AnimationSuccessListener;
 import com.android.launcher3.anim.PropertyListBuilder;
 import com.android.launcher3.apppairs.AppPairIcon;
 import com.android.launcher3.celllayout.CellPosMapper;
@@ -219,7 +216,6 @@ import com.android.launcher3.statemanager.StatefulActivity;
 import com.android.launcher3.states.RotationHelper;
 import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
-import com.android.launcher3.touch.AllAppsSwipeController;
 import com.android.launcher3.touch.ItemLongClickListener;
 import com.android.launcher3.util.ActivityResultInfo;
 import com.android.launcher3.util.ActivityTracker;
@@ -1068,7 +1064,6 @@ public class Launcher extends StatefulActivity<LauncherState>
         // Set the notification listener and fetch updated notifications when we resume
         NotificationListener.addNotificationsChangedListener(mPopupDataProvider);
 
-        DiscoveryBounce.showForHomeIfNeeded(this);
         mAppWidgetHolder.setActivityResumed(true);
 
         // Listen for IME changes to keep state up to date.
@@ -1282,7 +1277,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         NonConfigInstance lastInstance = (NonConfigInstance) getLastNonConfigurationInstance();
         boolean forceRestore = lastInstance != null
                 && (lastInstance.config.diff(mOldConfig) & CONFIG_UI_MODE) != 0;
-        if (forceRestore || !state.shouldDisableRestore()) {
+        if (state != ALL_APPS && (forceRestore || !state.shouldDisableRestore())) {
             mStateManager.goToState(state, false /* animated */);
         }
 
@@ -1602,12 +1597,10 @@ public class Launcher extends StatefulActivity<LauncherState>
             }
             mOverlayManager.hideOverlay(isStarted() && !isForceInvisible());
             handleGestureContract(intent);
-        } else if (Intent.ACTION_ALL_APPS.equals(intent.getAction())) {
+        } else if (Intent.ACTION_ALL_APPS.equals(intent.getAction())
+                || INTENT_ACTION_ALL_APPS_TOGGLE.equals(intent.getAction())
+                || Intent.ACTION_SHOW_WORK_APPS.equals(intent.getAction())) {
             showAllAppsFromIntent(alreadyOnHome);
-        } else if (INTENT_ACTION_ALL_APPS_TOGGLE.equals(intent.getAction())) {
-            toggleAllAppsFromIntent(alreadyOnHome);
-        } else if (Intent.ACTION_SHOW_WORK_APPS.equals(intent.getAction())) {
-            showAllAppsWorkTabFromIntent(alreadyOnHome);
         }
 
         TraceHelper.INSTANCE.endSection();
@@ -1618,34 +1611,9 @@ public class Launcher extends StatefulActivity<LauncherState>
         // Overridden
     }
 
-    protected void toggleAllAppsFromIntent(boolean alreadyOnHome) {
-        if (getStateManager().isInStableState(ALL_APPS)) {
-            getStateManager().goToState(NORMAL, alreadyOnHome);
-        } else {
-            if (mWorkspace.isOverlayShown()) {
-                mOverlayManager.hideOverlay(/* animate */true);
-            }
-            AbstractFloatingView.closeAllOpenViews(this);
-            getStateManager().goToState(ALL_APPS, true /* animated */,
-                    new AnimationSuccessListener() {
-                        @Override
-                        public void onAnimationSuccess(Animator animator) {
-                            if (mAppsView.getSearchUiManager().getEditText() != null) {
-                                mAppsView.getSearchUiManager().getEditText().requestFocus();
-                            }
-                        }
-                    });
-        }
-    }
-
     protected void showAllAppsFromIntent(boolean alreadyOnHome) {
         AbstractFloatingView.closeAllOpenViews(this);
-        getStateManager().goToState(ALL_APPS, alreadyOnHome);
-    }
-
-    private void showAllAppsWorkTabFromIntent(boolean alreadyOnHome) {
-        showAllAppsFromIntent(alreadyOnHome);
-        mAppsView.switchToTab(ActivityAllAppsContainerView.AdapterHolder.WORK);
+        getStateManager().goToState(NORMAL, alreadyOnHome);
     }
 
     /**
@@ -2685,7 +2653,7 @@ public class Launcher extends StatefulActivity<LauncherState>
     }
 
     public TouchController[] createTouchControllers() {
-        return new TouchController[] {getDragController(), new AllAppsSwipeController(this)};
+        return new TouchController[] {getDragController()};
     }
 
     public void onDragLayerHierarchyChanged() {

@@ -16,7 +16,6 @@
 
 package com.android.launcher3.views;
 
-import static com.android.launcher3.LauncherState.ALL_APPS;
 import static com.android.launcher3.LauncherState.NORMAL;
 
 import android.content.Context;
@@ -64,8 +63,6 @@ public class AccessibilityActionsView extends View implements StateListener<Laun
     public AccessibilityNodeInfo createAccessibilityNodeInfo() {
         AccessibilityNodeInfo info = super.createAccessibilityNodeInfo();
         Launcher l = Launcher.getLauncher(getContext());
-        info.addAction(new AccessibilityAction(
-                R.string.all_apps_button_label, l.getText(R.string.all_apps_button_label)));
         for (OptionItem item : OptionsPopupView.getOptions(l)) {
             info.addAction(new AccessibilityAction(item.labelRes, item.label));
         }
@@ -78,11 +75,6 @@ public class AccessibilityActionsView extends View implements StateListener<Laun
             return true;
         }
         Launcher l = Launcher.getLauncher(getContext());
-        if (action == R.string.all_apps_button_label) {
-            l.getStatsLogManager().keyboardStateManager().setLaunchedFromA11y(true);
-            l.getStateManager().goToState(ALL_APPS);
-            return true;
-        }
         for (OptionItem item : OptionsPopupView.getOptions(l)) {
             if (item.labelRes == action) {
                 if (item.eventId.getId() > 0) {

@@ -15,7 +15,6 @@
  */
 package com.android.launcher3.util;
 
-import static com.android.launcher3.LauncherState.ALL_APPS;
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.LauncherState.OVERVIEW;
 import static com.android.launcher3.accessibility.LauncherAccessibilityDelegate.getSupportedActions;
@@ -57,9 +56,6 @@ public class KeyboardShortcutsDelegate {
         ArrayList<KeyboardShortcutInfo> shortcutInfos = new ArrayList<>();
         if (mLauncher.isInState(NORMAL)) {
             shortcutInfos.add(
-                    new KeyboardShortcutInfo(mLauncher.getString(R.string.all_apps_button_label),
-                            KeyEvent.KEYCODE_A, KeyEvent.META_CTRL_ON));
-            shortcutInfos.add(
                     new KeyboardShortcutInfo(mLauncher.getString(R.string.widget_button_text),
                             KeyEvent.KEYCODE_W, KeyEvent.META_CTRL_ON));
         }
@@ -81,12 +77,6 @@ public class KeyboardShortcutsDelegate {
     public Boolean onKeyShortcut(int keyCode, KeyEvent event) {
         if (event.hasModifiers(KeyEvent.META_CTRL_ON)) {
             switch (keyCode) {
-                case KeyEvent.KEYCODE_A:
-                    if (mLauncher.isInState(NORMAL)) {
-                        mLauncher.getStateManager().goToState(ALL_APPS);
-                        return true;
-                    }
-                    break;
                 case KeyEvent.KEYCODE_W:
                     if (mLauncher.isInState(NORMAL)) {
                         OptionsPopupView.openWidgets(mLauncher);

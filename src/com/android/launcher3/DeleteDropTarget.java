@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.logging.StatsLogManager;
@@ -69,6 +70,9 @@ public class DeleteDropTarget extends ButtonDropTarget {
      */
     @Override
     public boolean supportsAccessibilityDrop(ItemInfo info, View view) {
+        if (!supportsDrop(info)) {
+            return false;
+        }
         if (info instanceof WorkspaceItemInfo) {
             // Support the action unless the item is in a context menu.
             return canRemove(info);
@@ -88,7 +92,12 @@ public class DeleteDropTarget extends ButtonDropTarget {
 
     @Override
     protected boolean supportsDrop(ItemInfo info) {
-        return true;
+        // Removing an app (or its folder) would hide its launcher entry.
+        if (info instanceof FolderInfo && info.itemType == Favorites.ITEM_TYPE_FOLDER) {
+            return ((FolderInfo) info).contents.stream()
+                    .noneMatch(item -> item.itemType == Favorites.ITEM_TYPE_APPLICATION);
+        }
+        return info.itemType != Favorites.ITEM_TYPE_APPLICATION;
     }
 
     /**
