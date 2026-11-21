@@ -10,7 +10,7 @@
 - 排查系统镜像里的桌面或最近任务时，读[项目笔记的 Soong 小节](docs/project-notes.md#soong)。
 - 排查桌面图标的缓存、备份恢复或比较加载耗时时，读[桌面图标小节](docs/project-notes.md#桌面图标)。
 - 拟写提交信息或执行提交时，读[提交信息规范](docs/commit-messages.md)。
-- 修改应用上桌、首尾翻页、分页圆点或 Hotseat 拖放时，读[主桌面交互小节](docs/project-notes.md#主桌面交互)。
+- 修改应用上桌、首尾翻页、负一屏、分页圆点或 Hotseat 拖放时，读[主桌面交互小节](docs/project-notes.md#主桌面交互)。
 
 ## 维护项目知识
 
