@@ -26,6 +26,8 @@ Git 使用附注标签 `v<versionName>`。发布时在根构建配置中更新 `
 
 两个变体的应用包名都是 `com.android.launcher3`。用 `adb shell pm path com.android.launcher3` 找到设备上的 `base.apk`，对该路径执行 `adb shell sha256sum <设备路径>`。在 Windows 上用 `Get-FileHash <本地APK路径>` 比对，再从同目录的 `output-metadata.json` 核对变体名。
 
+标准版和 Go 版共用根构建配置 `android.defaultConfig` 中的 `versionName` 和 `versionCode`。核对产物时查看 `output-metadata.json` 的 `elements[0].versionName`、`elements[0].versionCode` 和 `elements[0].outputFile`。APK 文件名依次包含项目名、`app` 风味、`recents` 风味和构建类型。上游源码基线见 README。[构建配置](../build.gradle) · [项目来源](../README.md)
+
 当前 Gradle 配置声明了测试 runner，但映射 `tests/src`、`tests/tapl` 和 `tests/res` 的 `androidTest` 源集已被注释。核对用例覆盖时，应检查该变体实际包含的测试类及 runner 报告的执行数量。仅生成测试 APK 不能证明 TAPL 用例已运行。[构建配置](../build.gradle)
 
 构建 Go 版可执行 `gradlew.bat :assembleL3goWithoutQuickstepDebug`。该变体使用 4×4 桌面网格，[Go 版 WidgetsModel](../go/src/com/android/launcher3/model/WidgetsModel.java) 禁用了微件和通知圆点。核对网格配置时查看 [Go 版设备配置](../go/res/xml/device_profiles.xml)。
