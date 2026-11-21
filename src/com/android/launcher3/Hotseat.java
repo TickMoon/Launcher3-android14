@@ -33,7 +33,12 @@ import android.view.ViewDebug;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import com.android.launcher3.celllayout.CellLayoutLayoutParams;
+import com.android.launcher3.celllayout.ItemConfiguration;
+import com.android.launcher3.util.CellAndSpan;
 import com.android.launcher3.util.HorizontalInsettableView;
+import com.android.launcher3.util.IntArray;
+import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.MultiTranslateDelegate;
 import com.android.launcher3.views.ActivityContext;
 
@@ -48,6 +53,8 @@ public class Hotseat extends CellLayout implements Insettable {
 
     @ViewDebug.ExportedProperty(category = "launcher")
     private boolean mHasVerticalHotseat;
+    private final IntSet mOccupiedSlots = new IntSet();
+    private IntSet mDragSlots;
     private Workspace<?> mWorkspace;
     private boolean mSendTouchToWorkspace;
 
@@ -80,6 +87,139 @@ public class Hotseat extends CellLayout implements Insettable {
      */
     public int getCellYFromOrder(int rank) {
         return mHasVerticalHotseat ? (getCountY() - (rank + 1)) : 0;
+    }
+
+    private int axis(int cellX, int cellY) {
+        return mHasVerticalHotseat ? cellY : cellX;
+    }
+
+    private IntSet getSlots() {
+        if (mDragSlots != null) return mDragSlots;
+        mOccupiedSlots.clear();
+        ShortcutAndWidgetContainer icons = getShortcutsAndWidgets();
+        for (int i = 0; i < icons.getChildCount(); i++) {
+            View child = icons.getChildAt(i);
+            if (child.getVisibility() == GONE) continue;
+            CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            mOccupiedSlots.add(axis(lp.getCellX(), lp.getCellY()));
+        }
+        return mOccupiedSlots;
+    }
+
+    /** Freeze the displayed slots so moving a neighbour does not move the pointer's target. */
+    void beginDragOver(View source) {
+        if (mDragSlots != null) return;
+        IntSet slots = new IntSet().addAll(getSlots());
+        if (source == null || source.getParent() != getShortcutsAndWidgets()) {
+            int capacity = axis(getCountX(), getCountY());
+            for (int i = 0; i < capacity; i++) {
+                if (!slots.contains(i)) {
+                    slots.add(i);
+                    break;
+                }
+            }
+        }
+        mDragSlots = slots;
+        getShortcutsAndWidgets().requestLayout();
+    }
+
+    void endDragOver() {
+        if (mDragSlots == null) return;
+        mDragSlots = null;
+        getShortcutsAndWidgets().requestLayout();
+    }
+
+    /** Give each occupied rank an equal share of the icon area, keeping its model rank intact. */
+    int getIconSlotOffset(int cellX, int cellY) {
+        int length = getSlotAreaLength();
+        int cell = axis(cellX, cellY);
+        IntArray slots = getSlots().getArray();
+        int index = slots.indexOf(cell);
+        if (length <= 0 || index < 0) return 0;
+        int cellSize = mHasVerticalHotseat ? getCellHeight() : getCellWidth();
+        int spacing = mHasVerticalHotseat ? mBorderSpace.y : mBorderSpace.x;
+        return Math.round((index + 0.5f) * length / slots.size() - cellSize / 2f)
+                - cell * (cellSize + spacing);
+    }
+
+    private int getSlotAreaLength() {
+        ShortcutAndWidgetContainer icons = getShortcutsAndWidgets();
+        if (mHasVerticalHotseat) return icons.getMeasuredHeight();
+        // CellLayout trims the unused pixels from both sides when laying out this container.
+        int width = icons.getMeasuredWidth();
+        int gridWidth = getCountX() * getCellWidth() + (getCountX() - 1) * mBorderSpace.x;
+        return width - 2 * (int) Math.ceil((width - gridWidth) / 2f);
+    }
+
+    @Override
+    public void pointToCellExact(int x, int y, int[] result) {
+        IntArray slots = getSlots().getArray();
+        ShortcutAndWidgetContainer icons = getShortcutsAndWidgets();
+        int length = getSlotAreaLength();
+        if (slots.isEmpty() || length <= 0) {
+            super.pointToCellExact(x, y, result);
+            return;
+        }
+        int position = axis(x - icons.getLeft(), y - icons.getTop());
+        int index = Utilities.boundToRange(position * slots.size() / length, 0, slots.size() - 1);
+        int slot = slots.get(index);
+        result[0] = mHasVerticalHotseat ? 0 : slot;
+        result[1] = mHasVerticalHotseat ? slot : 0;
+    }
+
+    @Override
+    public int[] findNearestAreaIgnoreOccupied(int x, int y, int spanX, int spanY, int[] result) {
+        if (mDragSlots == null || spanX != 1 || spanY != 1) {
+            return super.findNearestAreaIgnoreOccupied(x, y, spanX, spanY, result);
+        }
+        if (result == null) result = new int[2];
+        pointToCellExact(x, y, result);
+        return result;
+    }
+
+    @Override
+    public ItemConfiguration calculateReorder(int x, int y, int minSpanX, int minSpanY,
+            int spanX, int spanY, View dragView) {
+        if (mDragSlots == null || spanX != 1 || spanY != 1) {
+            return super.calculateReorder(x, y, minSpanX, minSpanY, spanX, spanY, dragView);
+        }
+        ItemConfiguration solution = new ItemConfiguration();
+        copyCurrentStateToSolution(solution);
+        solution.sortedViews.remove(dragView);
+        IntArray slots = mDragSlots.getArray();
+        if (slots.size() != solution.sortedViews.size() + 1) return solution;
+
+        int[] target = findNearestAreaIgnoreOccupied(x, y, 1, 1, null);
+        int dropSlot = axis(target[0], target[1]);
+        // Insert at the displayed slot, retaining the relative order and any holes in model ranks.
+        solution.sortedViews.sort((a, b) -> {
+            CellAndSpan first = solution.map.get(a);
+            CellAndSpan second = solution.map.get(b);
+            return Integer.compare(axis(first.cellX, first.cellY), axis(second.cellX, second.cellY));
+        });
+        int index = 0;
+        for (View child : solution.sortedViews) {
+            if (slots.get(index) == dropSlot) index++;
+            int slot = slots.get(index++);
+            CellAndSpan cell = solution.map.get(child);
+            if (axis(cell.cellX, cell.cellY) != slot) {
+                if (!((CellLayoutLayoutParams) child.getLayoutParams()).canReorder) return solution;
+                solution.intersectingViews.add(child);
+                cell.cellX = mHasVerticalHotseat ? 0 : slot;
+                cell.cellY = mHasVerticalHotseat ? slot : 0;
+            }
+        }
+        solution.cellX = target[0];
+        solution.cellY = target[1];
+        solution.isSolution = true;
+        return solution;
+    }
+
+    @Override
+    public void cellToRect(int cellX, int cellY, int spanX, int spanY, Rect bounds) {
+        super.cellToRect(cellX, cellY, spanX, spanY, bounds);
+        int offset = getIconSlotOffset(cellX, cellY);
+        bounds.offset(mHasVerticalHotseat ? 0 : offset, mHasVerticalHotseat ? offset : 0);
     }
 
     public void resetLayout(boolean hasVerticalHotseat) {

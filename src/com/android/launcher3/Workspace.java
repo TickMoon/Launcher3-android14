@@ -517,6 +517,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     public void onDragEnd() {
+        if (getHotseat() != null) getHotseat().endDragOver();
         if (ENFORCE_DRAG_EVENT_ORDER) {
             enforceDragParity("onDragEnd", 0, 0);
         }
@@ -2317,6 +2318,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
         // Reset the previous drag target
         setCurrentDropLayout(null);
+        if (!d.dragComplete && mDropToLayout instanceof Hotseat hotseat) {
+            hotseat.endDragOver();
+        }
         setCurrentDragOverlappingLayout(null);
 
         mSpringLoadedDragController.cancel();
@@ -2529,8 +2533,10 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                     item.spanY, child, mTargetCell);
         } else if ((mDragMode == DRAG_MODE_NONE || mDragMode == DRAG_MODE_REORDER)
                 && (mLastReorderX != reorderX || mLastReorderY != reorderY)
-                && targetCellDistance < mDragTargetLayout.getReorderRadius(mTargetCell, item.spanX,
-                item.spanY)) {
+                // Once inside a hotseat slot, its whole area can start a push. Folder hover was
+                // handled above using the smaller icon target.
+                && (mDragTargetLayout instanceof Hotseat || targetCellDistance
+                        < mDragTargetLayout.getReorderRadius(mTargetCell, item.spanX, item.spanY))) {
             mReorderAlarm.cancelAlarm();
             mLastReorderX = reorderX;
             mLastReorderY = reorderY;
@@ -2580,6 +2586,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         // Update the current drop layout if the target changed
         if (layout != mDragTargetLayout) {
             setCurrentDropLayout(layout);
+            if (layout instanceof Hotseat hotseat) {
+                hotseat.beginDragOver(mDragInfo == null ? null : mDragInfo.cell);
+            } else if (getHotseat() != null) {
+                getHotseat().endDragOver();
+            }
             setCurrentDragOverlappingLayout(layout);
             return true;
         }
