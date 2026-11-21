@@ -351,6 +351,9 @@ public class LoaderTask implements Runnable {
 
             mModelDelegate.modelLoadComplete();
             transaction.commit();
+            // Model update tasks can run once this loader transaction has closed.
+            MODEL_EXECUTOR.post(() -> mApp.getModel().enqueueModelUpdateTask(
+                    new SyncWorkspaceAppsTask()));
             memoryLogger.clearLogs();
             if (mIsRestoreFromBackup) {
                 mIsRestoreFromBackup = false;
@@ -650,11 +653,6 @@ public class LoaderTask implements Runnable {
         for (UserHandle user : profiles) {
             // Query for the set of apps
             final List<LauncherActivityInfo> apps = mLauncherApps.getActivityList(null, user);
-            // Fail if we don't have any apps
-            // TODO: Fix this. Only fail for the current user.
-            if (apps == null || apps.isEmpty()) {
-                return allActivityList;
-            }
             boolean quietMode = mUserManagerState.isUserQuiet(user);
 
             if (Flags.enablePrivateSpace()) {
@@ -665,6 +663,9 @@ public class LoaderTask implements Runnable {
                 }
             }
             // Create the ApplicationInfos
+            if (apps == null) {
+                continue;
+            }
             for (int i = 0; i < apps.size(); i++) {
                 LauncherActivityInfo app = apps.get(i);
                 AppInfo appInfo = new AppInfo(app, mUserCache.getUserInfo(user), quietMode);

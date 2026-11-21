@@ -206,6 +206,14 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
             // For system apps, package manager send OP_UPDATE when an app is enabled.
             final boolean isNewApkAvailable = mOp == OP_ADD || mOp == OP_UPDATE;
             synchronized (dataModel) {
+                HashSet<ComponentName> placedApps = new HashSet<>();
+                if (!removedComponents.isEmpty()) {
+                    dataModel.forAllWorkspaceItemInfos(mUser, item -> {
+                        if (SyncWorkspaceAppsTask.isPlacedApp(dataModel, item)) {
+                            placedApps.add(item.getTargetComponent());
+                        }
+                    });
+                }
                 dataModel.forAllWorkspaceItemInfos(mUser, si -> {
 
                     boolean infoUpdated = false;
@@ -244,7 +252,7 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                             if (!isTargetValid && (si.hasStatusFlag(
                                     FLAG_RESTORED_ICON | FLAG_AUTOINSTALL_ICON)
                                     || si.isArchived())) {
-                                if (updateWorkspaceItemIntent(context, si, packageName)) {
+                                if (updateWorkspaceItemIntent(context, si, packageName, null)) {
                                     infoUpdated = true;
                                 } else if (si.hasPromiseIconUi()) {
                                     removedShortcuts.add(si.id);
@@ -260,7 +268,9 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                                 infoUpdated = true;
                             }
                         } else if (isNewApkAvailable && removedComponents.contains(cn)) {
-                            if (updateWorkspaceItemIntent(context, si, packageName)) {
+                            if (updateWorkspaceItemIntent(context, si, packageName,
+                                    SyncWorkspaceAppsTask.isPlacedApp(dataModel, si)
+                                            ? placedApps : null)) {
                                 infoUpdated = true;
                             }
                         }
@@ -385,6 +395,10 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
                     .removeFromInstallQueue(removedPackages, mUser);
         }
 
+        if (mOp == OP_ADD || mOp == OP_UPDATE) {
+            app.getModel().enqueueModelUpdateTask(new SyncWorkspaceAppsTask());
+        }
+
         if (mOp == OP_ADD) {
             // Load widgets for the new package. Changes due to app updates are handled through
             // AppWidgetHost events, this is just to initialize the long-press options.
@@ -400,7 +414,7 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
      * @return Whether the shortcut intent was changed.
      */
     private boolean updateWorkspaceItemIntent(Context context,
-            WorkspaceItemInfo si, String packageName) {
+            WorkspaceItemInfo si, String packageName, HashSet<ComponentName> placedApps) {
         if (si.itemType == LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT) {
             // Do not update intent for deep shortcuts as they contain additional information
             // about the shortcut.
@@ -408,7 +422,8 @@ public class PackageUpdatedTask extends BaseModelUpdateTask {
         }
         // Try to find the best match activity.
         Intent intent = new PackageManagerHelper(context).getAppLaunchIntent(packageName, mUser);
-        if (intent != null) {
+        // A removed secondary activity must not turn into a second copy of the main icon.
+        if (intent != null && (placedApps == null || placedApps.add(intent.getComponent()))) {
             si.intent = intent;
             si.status = WorkspaceItemInfo.DEFAULT;
             return true;

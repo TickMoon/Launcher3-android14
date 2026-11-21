@@ -42,9 +42,6 @@ public class SessionCommitReceiver extends BroadcastReceiver {
 
     private static final String LOG = "SessionCommitReceiver";
 
-    // Preference key for automatically adding icon to homescreen.
-    public static final String ADD_ICON_PREFERENCE_KEY = "pref_add_icon_to_home";
-
     @Override
     public void onReceive(Context context, Intent intent) {
         Executors.MODEL_EXECUTOR.execute(() -> processIntent(context, intent));
@@ -54,7 +51,6 @@ public class SessionCommitReceiver extends BroadcastReceiver {
     private static void processIntent(Context context, Intent intent) {
         UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
         if (!isEnabled(context, user)) {
-            // User has decided to not add icons on homescreen.
             return;
         }
 
@@ -93,17 +89,9 @@ public class SessionCommitReceiver extends BroadcastReceiver {
                 .queueItem(info.getAppPackageName(), user);
     }
 
-    /**
-     * Returns whether adding Installed App Icons to home screen is allowed or not.
-     * Not allowed when:
-     * - User belongs to {@link com.android.launcher3.util.UserIconInfo.TYPE_PRIVATE} or
-     * - Home Settings preference to add App Icons on Home Screen is set as disabled
-     */
+    /** Returns whether install sessions for this profile can place icons on the workspace. */
     public static boolean isEnabled(Context context, UserHandle user) {
-        if (Flags.privateSpaceRestrictItemDrag() && user != null
-                && UserCache.getInstance(context).getUserInfo(user).isPrivate()) {
-            return false;
-        }
-        return LauncherPrefs.getPrefs(context).getBoolean(ADD_ICON_PREFERENCE_KEY, true);
+        return !Flags.privateSpaceRestrictItemDrag() || user == null
+                || !UserCache.getInstance(context).getUserInfo(user).isPrivate();
     }
 }
