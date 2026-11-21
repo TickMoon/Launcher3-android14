@@ -4,7 +4,7 @@
 
 **为什么修改 `quickstep/src/` 后，Android Studio 构建的 APK 看不到变化？**
 
-当前 Gradle 配置启用的两个应用变体是 `aospWithoutQuickstepDebug` 和 `l3goWithoutQuickstepDebug`。两者都使用 `src/` 下的公共代码，并通过 `withoutQuickstep` 加入 `src_ui_overrides/`。声明 `quickstep/src/` 的 `withQuickstep` 源集及对应 flavor 均已注释，因此这里的修改不会编入这两个 APK。[构建配置](../build.gradle)
+为了让仓库脱离完整 AOSP 源码树也能在 Android Studio 中构建，Gradle 适配时只保留了不含 Quickstep 的桌面变体。`aospWithoutQuickstepDebug` 和 `l3goWithoutQuickstepDebug` 都使用 `src/` 下的公共代码，并通过 `withoutQuickstep` 加入 `src_ui_overrides/`。声明 `quickstep/src/` 的 `withQuickstep` 源集及对应 flavor 均已注释，因此这里的修改不会编入这两个 APK。[构建配置](../build.gradle)
 
 核对具体文件时，先在 Android Studio 的 **Build Variants** 查看所选变体，再到构建配置的 `android.sourceSets` 查 `main`、对应 flavor 和变体专属的声明。例如，Go 版还会从 `l3go` 源集加入 `go/src/` 和 `go/res/`。
 
