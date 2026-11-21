@@ -4,6 +4,7 @@
 
 ## 按问题查阅
 
+- 首次了解项目、定位跨模块问题或评估功能改动影响时，读[架构与功能概览](docs/architecture.md)。
 - Android Studio 中修改未生效、需要确认变体或源码目录时，读[项目笔记的 Gradle 小节](docs/project-notes.md#gradle)。
 - 排查系统镜像里的桌面或最近任务时，读[项目笔记的 Soong 小节](docs/project-notes.md#soong)。
 - 拟写提交信息或执行提交时，读[提交信息规范](docs/commit-messages.md)。
