@@ -2,7 +2,7 @@
 
 ## 应用版本与标签
 
-标准版和 Go 版共用根目录 [build.gradle](../build.gradle) 的 `android.defaultConfig`。面向用户的 `versionName` 采用三段十进制整数 `主版本.次版本.修订号`。一次发布包含多类改动时，按影响最大的一类递增。
+标准版和 Go 版共用根目录 [build.gradle](../build.gradle) 的三段基础版本号 `主版本.次版本.修订号`。一次发布包含多类改动时，按影响最大的一类递增。
 
 | 升级哪一位 | 适用改动 | 示例 |
 | --- | --- | --- |
@@ -12,7 +12,11 @@
 
 主版本递增时将次版本和修订号归零，次版本递增时将修订号归零。Android 的 `versionCode` 固定为五位十进制整数。主版本占一位（1–9），次版本和修订号各占两位（00–99）。Gradle 按 `主版本 × 10000 + 次版本 × 100 + 修订号` 自动生成，例如 `2.0.0` 对应 `20000`，`2.1.3` 对应 `20103`。两个变体共用这组版本数字。
 
-Git 使用附注标签 `v<versionName>`。发布时在根构建配置中更新 `major`、`minor`、`patch`，构建并核对两个 APK 的 `versionName` 和 `versionCode`，再将标签打在包含此次版本更新的提交上。本次里程碑的标签为 `v2.0.0`。
+Gradle 将 APK 的 `versionName` 拼成 `<基础版本>-<渠道>-<构建类型>-<分支>-<短哈希>`，例如 `2.0.0-go-debug-main-41996127`。渠道由 `app` 维度的 flavor 决定，`aosp` 对应 `aosp`，`l3go` 对应 `go`。构建类型取 `debug` 或 `release`，目前项目只启用了 Debug 变体。
+
+在 Git 工作树中构建时，Gradle 读取当前分支，将分支名中的 `/` 替换为 `-`。检出标签或提交而处于 detached HEAD 时，可以通过 `-PbuildBranch=<分支名>` 传入来源分支；GitHub Actions 也可从 PR 源分支或分支事件取得名称。无分支信息时显示 `detached`。短哈希由 `git rev-parse --short=8 HEAD` 生成，可在包含该提交的仓库中用 `git rev-parse --verify "<短哈希>^{commit}"` 核对完整提交号。
+
+Git 使用附注标签 `v<基础版本>`，同一次发布的两个渠道共用一个标签。发布时提交版本相关改动，从该提交构建两个 APK，核对版本名末尾的短哈希及 `versionCode`，再将标签打在该提交上。本次里程碑的标签为 `v2.0.0`。
 
 ## Gradle
 
@@ -26,7 +30,7 @@ Git 使用附注标签 `v<versionName>`。发布时在根构建配置中更新 `
 
 两个变体的应用包名都是 `com.android.launcher3`。用 `adb shell pm path com.android.launcher3` 找到设备上的 `base.apk`，对该路径执行 `adb shell sha256sum <设备路径>`。在 Windows 上用 `Get-FileHash <本地APK路径>` 比对，再从同目录的 `output-metadata.json` 核对变体名。
 
-标准版和 Go 版共用根构建配置 `android.defaultConfig` 中的 `versionName` 和 `versionCode`。核对产物时查看 `output-metadata.json` 的 `elements[0].versionName`、`elements[0].versionCode` 和 `elements[0].outputFile`。APK 文件名依次包含项目名、`app` 风味、`recents` 风味和构建类型。上游源码基线见 README。[构建配置](../build.gradle) · [项目来源](../README.md)
+标准版和 Go 版共用基础版本和 `versionCode`，各自的 `versionName` 标明渠道、构建类型、分支和提交。核对产物时查看 `output-metadata.json` 的 `elements[0].versionName`、`elements[0].versionCode` 和 `elements[0].outputFile`。APK 文件名依次包含项目名、`app` 风味、`recents` 风味和构建类型。上游源码基线见 README。[构建配置](../build.gradle) · [项目来源](../README.md)
 
 当前 Gradle 配置声明了测试 runner，但映射 `tests/src`、`tests/tapl` 和 `tests/res` 的 `androidTest` 源集已被注释。核对用例覆盖时，应检查该变体实际包含的测试类及 runner 报告的执行数量。仅生成测试 APK 不能证明 TAPL 用例已运行。[构建配置](../build.gradle)
 

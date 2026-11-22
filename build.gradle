@@ -17,6 +17,22 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'kotlin-android'
 
+def gitOutput = { List<String> arguments ->
+    providers.exec {
+        workingDir rootDir
+        commandLine(['git'] + arguments)
+    }.standardOutput.asText.get().trim()
+}
+def buildBranch = gitOutput(['branch', '--show-current'])
+if (!buildBranch) {
+    buildBranch = providers.gradleProperty('buildBranch').orNull ?:
+            providers.environmentVariable('GITHUB_HEAD_REF').orNull ?:
+            (providers.environmentVariable('GITHUB_REF_TYPE').orNull == 'branch' ?
+                    providers.environmentVariable('GITHUB_REF_NAME').orNull : null) ?: 'detached'
+}
+def versionBranch = buildBranch.replace('/', '-')
+def versionCommit = gitOutput(['rev-parse', '--short=8', 'HEAD'])
+
 android {
     namespace 'com.android.launcher3'
     testNamespace 'com.android.launcher3.tests'
@@ -37,6 +53,9 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
+        configureEach {
+            versionNameSuffix "-${name}-${versionBranch}-${versionCommit}"
+        }
         debug {
             minifyEnabled false
         }
@@ -54,12 +73,14 @@ android {
     productFlavors {
         aosp {
             dimension "app"
+            versionNameSuffix '-aosp'
             applicationId 'com.android.launcher3'
             testApplicationId 'com.android.launcher3.tests'
         }
 
         l3go {
             dimension "app"
+            versionNameSuffix '-go'
             applicationId 'com.android.launcher3'
             testApplicationId 'com.android.launcher3.tests'
         }
