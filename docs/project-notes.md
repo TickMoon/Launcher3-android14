@@ -20,6 +20,8 @@ Git 使用附注标签 `v<基础版本>`，同一次发布的两个渠道共用�
 
 ## Gradle
 
+`main` 分支的标准版和 Go 版 Debug 安装包存放在 [artifacts/apk](../artifacts/apk/) 下。文件名末尾的短哈希来自编译时的源码提交，可用 `git show <短哈希>` 查看对应源码。
+
 **为什么修改 `quickstep/src/` 后，Android Studio 构建的 APK 看不到变化？**
 
 为了让仓库脱离完整 AOSP 源码树也能在 Android Studio 中构建，Gradle 适配时只保留了不含 Quickstep 的桌面变体。`aospWithoutQuickstepDebug` 和 `l3goWithoutQuickstepDebug` 都使用 `src/` 下的公共代码，并通过 `withoutQuickstep` 加入 `src_ui_overrides/`。声明 `quickstep/src/` 的 `withQuickstep` 源集及对应 flavor 均已注释，因此这里的修改不会编入这两个 APK。[构建配置](../build.gradle)
