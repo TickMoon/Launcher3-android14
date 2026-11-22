@@ -165,6 +165,12 @@ android {
     }
 }
 
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        output.outputFileName = "${variant.versionName}.apk"
+    }
+}
+
 allprojects {
     repositories {
 //        maven { url "../../../prebuilts/sdk/current/androidx/m2repository" }

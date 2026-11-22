@@ -30,7 +30,7 @@ Git 使用附注标签 `v<基础版本>`，同一次发布的两个渠道共用�
 
 两个变体的应用包名都是 `com.android.launcher3`。用 `adb shell pm path com.android.launcher3` 找到设备上的 `base.apk`，对该路径执行 `adb shell sha256sum <设备路径>`。在 Windows 上用 `Get-FileHash <本地APK路径>` 比对，再从同目录的 `output-metadata.json` 核对变体名。
 
-标准版和 Go 版共用基础版本和 `versionCode`，各自的 `versionName` 标明渠道、构建类型、分支和提交。核对产物时查看 `output-metadata.json` 的 `elements[0].versionName`、`elements[0].versionCode` 和 `elements[0].outputFile`。APK 文件名依次包含项目名、`app` 风味、`recents` 风味和构建类型。上游源码基线见 README。[构建配置](../build.gradle) · [项目来源](../README.md)
+标准版和 Go 版共用基础版本和 `versionCode`，各自的 `versionName` 标明渠道、构建类型、分支和提交。Gradle 将应用 APK 命名为 `<versionName>.apk`。核对产物时，查看 `output-metadata.json` 中的 `elements[0]`，确认 `outputFile` 等于 `versionName` 加上 `.apk`，并核对同目录中的实际文件和 APK 清单内的 `versionName`、`versionCode`。上游源码基线见 README。[构建配置](../build.gradle) · [项目来源](../README.md)
 
 当前 Gradle 配置声明了测试 runner，但映射 `tests/src`、`tests/tapl` 和 `tests/res` 的 `androidTest` 源集已被注释。核对用例覆盖时，应检查该变体实际包含的测试类及 runner 报告的执行数量。仅生成测试 APK 不能证明 TAPL 用例已运行。[构建配置](../build.gradle)
 
